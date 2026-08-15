@@ -4,7 +4,7 @@ AgriSense AI is an agriculture prediction system that uses Machine Learning to p
 
 ## 🚀 Features
 
-- 🌱 Crop Recommendation
+** 🌱 Crop Recommendation **
 - 🌾 Crop Yield Prediction
 - 💰 Yield & Cost Prediction
 - 🖥️ Streamlit Frontend
