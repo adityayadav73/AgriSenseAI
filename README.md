@@ -13,7 +13,6 @@ AgriSense AI is an agriculture prediction system that uses Machine Learning to p
 - ☁️ Render Deployment
 ## 🏗️ Project Architecture
 
-text
 User  
   │
   ▼
@@ -30,6 +29,16 @@ Prediction
   │
   ▼
 Result  
+## 🛠️ Technologies Used
+Python
+Pandas
+NumPy
+Scikit-learn
+Joblib
+FastAPI
+Uvicorn
+Streamlit
+Render
 ## Repository Structure
 AgriSense-AI/
 │
@@ -49,3 +58,4 @@ AgriSense-AI/
 ├── 02_le_season.joblib  
 │
 └── 03_yield_cost_model.joblib  
+
