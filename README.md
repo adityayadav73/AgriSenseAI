@@ -11,7 +11,25 @@ AgriSense AI is an agriculture prediction system that uses Machine Learning to p
 - ⚡ FastAPI Backend
 - 🤖 Machine Learning Models
 - ☁️ Render Deployment
+## 🏗️ Project Architecture
 
+text
+User  
+  │
+  ▼
+Streamlit Frontend  
+  │
+  ▼
+FastAPI Backend  
+  │
+  ▼
+Machine Learning Models  
+  │
+  ▼
+Prediction  
+  │
+  ▼
+Result  
 ## Repository Structure
 AgriSense-AI/
 │
