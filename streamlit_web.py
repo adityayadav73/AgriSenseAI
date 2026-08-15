@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import json
+import os
 
 
 # =========================================================
@@ -18,7 +19,12 @@ st.set_page_config(
 # API CONFIG
 # =========================================================
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = os.getenv(
+    "API_URL",
+    "http://127.0.0.1:8000"
+)
+
+
 
 
 # =========================================================
@@ -205,42 +211,18 @@ if option == "🌱 Crop Recommendation":
             "rainfall": rainfall
         }
 
-        with st.spinner("Crop predict ho raha hai..."):
-
-            result = call_api(
-                "/predict1",
-                payload
+        response = requests.post(
+            f"{API_URL}/predict1",
+            json=payload
+        )
+        if response.status_code == 200:
+            result = response.json()
+            st.success("🌾Crop Prediction Successful!")
+            st.json(result)
+        else:
+            st.error(
+                f"Error:{response.status_code}"
             )
-
-        if result:
-
-            st.success("✅ Crop prediction successful!")
-
-            st.subheader("Prediction Result")
-
-            # Different possible response keys handle karne ke liye
-            if isinstance(result, dict):
-
-                crop = (
-                    result.get("crop")
-                    or result.get("Crop")
-                    or result.get("predicted_crop")
-                    or result.get("prediction")
-                )
-
-                if crop:
-
-                    st.success(
-                        f"🌱 Recommended Crop: **{crop}**"
-                    )
-
-                with st.expander("API Response"):
-
-                    st.json(result)
-
-            else:
-
-                st.write(result)
 
 
 # =========================================================
@@ -304,43 +286,20 @@ elif option == "🌾 Yield Prediction":
                 "Season": season,
                 "Area": area
             }
-
-            with st.spinner("Yield predict ho raha hai..."):
-
-                result = call_api(
-                    "/predict2",
-                    payload
-                )
-
-            if result:
-
-                st.success("✅ Yield prediction successful!")
-
-                st.subheader("Prediction Result")
-
-                if isinstance(result, dict):
-
-                    yield_value = (
-                        result.get("yield")
-                        or result.get("Yield")
-                        or result.get("predicted_yield")
-                        or result.get("prediction")
+            response = requests.post(
+                        f"{API_URL}/prediction2",
+                        json=payload
+                    )
+            if response.status_code == 200:
+                        result = response.json()
+                        st.success("🌾Yield Prediction Successful!")
+                        st.json(result)
+            else:
+                 st.error(
+                        f"Error:{response.status_code}"
                     )
 
-                    if yield_value is not None:
-
-                        st.metric(
-                            "🌾 Predicted Yield",
-                            str(yield_value)
-                        )
-
-                    with st.expander("API Response"):
-
-                        st.json(result)
-
-                else:
-
-                    st.write(result)
+            
 
 
 # =========================================================
@@ -399,65 +358,18 @@ elif option == "💰 Yield & Cost Prediction":
                 "Yield": yield_value
             }
 
-            with st.spinner(
-                "Yield aur cost calculation ho raha hai..."
-            ):
-
-                result = call_api(
-                    "/predict3",
-                    payload
-                )
-
-            if result:
-
-                st.success(
-                    "✅ Yield & Cost prediction successful!"
-                )
-
-                st.subheader("Prediction Result")
-
-                if isinstance(result, dict):
-
-                    # Possible response keys
-                    predicted_yield = (
-                        result.get("yield")
-                        or result.get("Yield")
-                        or result.get("predicted_yield")
+            response = requests.post(
+                        f"{API_URL}/predict3",
+                        json=payload
                     )
-
-                    cost = (
-                        result.get("cost")
-                        or result.get("Cost")
-                        or result.get("predicted_cost")
-                    )
-
-                    col1, col2 = st.columns(2)
-
-                    with col1:
-
-                        if predicted_yield is not None:
-
-                            st.metric(
-                                "🌾 Predicted Yield",
-                                str(predicted_yield)
-                            )
-
-                    with col2:
-
-                        if cost is not None:
-
-                            st.metric(
-                                "💰 Estimated Cost",
-                                str(cost)
-                            )
-
-                    with st.expander("API Response"):
-
+            if response.status_code == 200:
+                        result = response.json()
+                        st.success("🌾Yield & Cost Prediction Successful!")
                         st.json(result)
-
-                else:
-
-                    st.write(result)
+            else:
+                st.error(
+                        f"Error:{response.status_code}"
+                )
 
 
 # =========================================================
