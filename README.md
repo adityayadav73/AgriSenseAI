@@ -24,5 +24,24 @@ FastAPI Backend
 Machine Learning Models
   ↓
 Prediction
+
+AgriSense-AI/
+│
+├── mains.py
+├── streamlit_app.py
+├── requirements.txt
+├── README.md
+│
+├── 01_crop_model.joblib
+├── 01_crop_features.joblib
+├── 01_crop_encoder.joblib
+│
+├── 02_yield_model.joblib
+├── 02_yield_features.joblib
+├── 02_le_crop.joblib
+├── 02_le_state.joblib
+├── 02_le_season.joblib
+│
+└── 03_yield_cost_model.joblib
   ↓
 Result
