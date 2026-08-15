@@ -30,15 +30,15 @@ Prediction
   ▼
 Result  
 ## 🛠️ Technologies Used
-Python
-Pandas
-NumPy
-Scikit-learn
-Joblib
-FastAPI
-Uvicorn
-Streamlit
-Render
+Python  
+Pandas  
+NumPy  
+Scikit-learn  
+Joblib  
+FastAPI  
+Uvicorn  
+Streamlit  
+Render  
 ## Repository Structure
 AgriSense-AI/
 │
