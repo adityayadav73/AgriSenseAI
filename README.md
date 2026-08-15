@@ -4,7 +4,7 @@ AgriSense AI is an agriculture prediction system that uses Machine Learning to p
 
 ## 🚀 Features
 
-** 🌱 Crop Recommendation **
+- 🌱 Crop Recommendation   
 - 🌾 Crop Yield Prediction
 - 💰 Yield & Cost Prediction
 - 🖥️ Streamlit Frontend
@@ -30,7 +30,7 @@ Prediction
   ▼
 Result  
 ## Prediction Modules
-- 🌱 Crop Recommendation  
+### 🌱 Crop Recommendation  
 - The crop recommendation model uses:  
 - Nitrogen (N)  
 - Phosphorus (P)  
@@ -39,14 +39,14 @@ Result
 - Humidity  
 - pH  
 - Rainfall  
-- 🌾 Yield Prediction 
+### 🌾 Yield Prediction 
 - The yield prediction module uses agriculture-related features such as:  
 - Crop  
 - State  
 - Season  
 - Area  
 - Other model-specific features  
-- 💰 Yield & Cost Prediction  
+### 💰 Yield & Cost Prediction  
 - This module predicts agriculture yield and related cultivation cost using the features required by the trained model.  
 ## 🛠️ Technologies Used
 - Python  
