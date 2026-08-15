@@ -23,6 +23,10 @@ FastAPI Backend
 Machine Learning Models 
   ↓
 Prediction   
+
+  ↓
+Result
+
 AgriSense-AI/
 │
 ├── mains.py
@@ -41,8 +45,3 @@ AgriSense-AI/
 ├── 02_le_season.joblib
 │
 └── 03_yield_cost_model.joblib
-
-
-
-  ↓
-Result
