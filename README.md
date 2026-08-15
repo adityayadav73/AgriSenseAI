@@ -29,6 +29,25 @@ Prediction
   │
   ▼
 Result  
+## Prediction Modules
+🌱 Crop Recommendation  
+The crop recommendation model uses:  
+Nitrogen (N)  
+Phosphorus (P)  
+Potassium (K)  
+Temperature  
+Humidity  
+pH  
+Rainfall  
+🌾 Yield Prediction 
+The yield prediction module uses agriculture-related features such as:  
+Crop  
+State  
+Season  
+Area  
+Other model-specific features  
+💰 Yield & Cost Prediction  
+This module predicts agriculture yield and related cultivation cost using the features required by the trained model.  
 ## 🛠️ Technologies Used
 Python  
 Pandas  
