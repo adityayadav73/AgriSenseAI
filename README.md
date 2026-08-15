@@ -12,7 +12,7 @@ AgriSense AI is an agriculture prediction system that uses Machine Learning to p
 - 🤖 Machine Learning Models
 - ☁️ Render Deployment
 
-##Repository Structure
+## Repository Structure
 AgriSense-AI/
 │
 ├── mains.py  
