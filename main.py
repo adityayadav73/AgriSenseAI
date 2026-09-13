@@ -92,10 +92,10 @@ def predict_crop(Agri1:CropInput):
         }])
 
         predicted_num = model_crop.predict(input_data)[0]
-        crop_name = encoder_crop.inverse_transform([predicted_num])
+        crop_name = encoder_crop.inverse_transform([predicted_num])[0]
 
         return{
-            "predict_crop":f"Recommended crop is{crop_name} successfully"
+            "predict_crop":f"Recommended crop is{crop_name}"
         }
             
     except Exception as e:
