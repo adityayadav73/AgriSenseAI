@@ -1,578 +1,783 @@
 import os
 import requests
-import pandas as pd
 import streamlit as st
-from datetime import datetime
 
 
-# =========================================================
-# CONFIG
-# =========================================================
-
-API_URL = os.getenv(
-    "AGRISENSE_API_URL",
-    "https://agrisense-api.onrender.com"
-).rstrip("/")
-
-WEATHER_API_KEY = os.getenv(
-    "OPENWEATHER_API_KEY",
-    ""
-)
-
-WEATHER_URL = (
-    "https://api.openweathermap.org/data/2.5/weather"
-)
-
-
-# =========================================================
+# ============================================================
 # PAGE CONFIG
-# =========================================================
+# ============================================================
 
 st.set_page_config(
     page_title="AgriSense AI",
     page_icon="🌱",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 
-# =========================================================
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+# Render par Environment Variable:
+# FASTAPI_URL=https://your-fastapi-service.onrender.com
+
+API_URL = os.getenv(
+    "FASTAPI_URL",
+    "https://agrisenseai-gps1.onrender.com"
+).rstrip("/")
+
+
+# Render par Environment Variable:
+# OPENWEATHER_API_KEY=your_api_key
+
+WEATHER_API_KEY = os.getenv(
+    "OPENWEATHER_API_KEY"
+    
+)
+
+
+WEATHER_URL = (
+    "https://agrisenseai-n621.onrender.com"
+)
+
+
+# ============================================================
 # CUSTOM CSS
-# =========================================================
+# ============================================================
 
 st.markdown(
     """
-    <style>
+<style>
 
-    .block-container {
-        padding-top: 1rem;
-        padding-bottom: 2rem;
-        max-width: 1250px;
+    /* ================================
+       GENERAL
+       ================================ */
+
+    .stApp {
+        background: #0b0f14;
     }
+
+    .main .block-container {
+        max-width: 1250px;
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
+
+
+    /* ================================
+       SIDEBAR
+       ================================ */
+
+    section[data-testid="stSidebar"] {
+        background: #20232b;
+        border-right: 1px solid #343942;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: #ffffff;
+    }
+
+    section[data-testid="stSidebar"] .stRadio label {
+        font-size: 15px;
+    }
+
+
+    /* ================================
+       HERO
+       ================================ */
 
     .hero {
-        padding: 40px;
-        border-radius: 24px;
-        margin-bottom: 25px;
-        background: linear-gradient(
-            135deg,
-            #0b5d3b,
-            #198754
-        );
-        color: white;
-    }
+        background:
+            linear-gradient(
+                135deg,
+                #064e32 0%,
+                #087443 50%,
+                #0b5d3b 100%
+            );
 
-    .hero h1,
-    .hero h2,
-    .hero h3,
-    .hero p {
-        color: white !important;
+        padding: 38px;
+        border-radius: 0 0 24px 24px;
+
+        color: white;
+
+        margin-bottom: 25px;
+
+        box-shadow:
+            0 10px 35px rgba(0, 0, 0, 0.25);
     }
 
     .hero h1 {
+        color: white;
         font-size: 48px;
-        margin-bottom: 10px;
+        margin: 0 0 10px 0;
+        font-weight: 700;
+    }
+
+    .hero h3 {
+        color: #d9ffe9;
+        font-size: 23px;
+        margin-top: 8px;
     }
 
     .hero p {
-        font-size: 18px;
+        color: #ecfff4;
+        font-size: 17px;
         line-height: 1.7;
     }
 
+
+    /* ================================
+       SECTION TITLE
+       ================================ */
+
+    .section-title {
+        color: white;
+        font-size: 30px;
+        font-weight: 700;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+
+
+    /* ================================
+       FEATURE CARDS
+       ================================ */
+
     .feature-card {
-        padding: 22px;
+        background: #171b21;
+        border: 1px solid #30353e;
         border-radius: 18px;
-        min-height: 175px;
-        margin-bottom: 18px;
 
-        background: rgba(128, 128, 128, 0.08);
+        padding: 25px;
 
-        border: 1px solid
-        rgba(128, 128, 128, 0.25);
+        min-height: 190px;
+
+        box-shadow:
+            0 5px 20px rgba(0, 0, 0, 0.18);
+
+        margin-bottom: 20px;
+
+        transition: 0.2s;
+    }
+
+    .feature-card:hover {
+        border-color: #159957;
     }
 
     .feature-card h3 {
-        color: #198754 !important;
+        color: #ffffff;
+        font-size: 20px;
+        margin-bottom: 15px;
     }
 
     .feature-card p {
-        line-height: 1.6;
-    }
-
-    .result-card {
-        padding: 26px;
-        border-radius: 18px;
-        margin-top: 20px;
-
-        background: rgba(25, 135, 84, 0.10);
-
-        border: 1px solid
-        rgba(25, 135, 84, 0.35);
-
-        border-left: 6px solid #198754;
-    }
-
-    .result-card h2,
-    .result-card h3 {
-        color: #198754 !important;
-    }
-
-    .info-card {
-        padding: 22px;
-        border-radius: 18px;
-
-        background: rgba(128, 128, 128, 0.08);
-
-        border: 1px solid
-        rgba(128, 128, 128, 0.25);
-
+        color: #c9ced6;
+        font-size: 15px;
         line-height: 1.7;
     }
 
+
+    /* ================================
+       RESULT BOX
+       ================================ */
+
+    .result-box {
+        background:
+            linear-gradient(
+                135deg,
+                #063e29,
+                #096b40
+            );
+
+        border-left: 6px solid #36d681;
+
+        border-radius: 15px;
+
+        padding: 25px;
+
+        margin-top: 20px;
+
+        color: white;
+
+        box-shadow:
+            0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .result-box h2 {
+        color: #ffffff;
+        margin-top: 0;
+    }
+
+    .result-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #9dffc5;
+    }
+
+
+    /* ================================
+       INFO BOX
+       ================================ */
+
+    .info-box {
+        background: #131c25;
+
+        border: 1px solid #2e526b;
+
+        border-left: 5px solid #2196f3;
+
+        border-radius: 12px;
+
+        padding: 18px;
+
+        color: #dceeff;
+
+        margin: 15px 0;
+    }
+
+
+    /* ================================
+       WEATHER CARD
+       ================================ */
+
     .weather-card {
-        padding: 22px;
+        background: #171b21;
+
+        border: 1px solid #30353e;
+
         border-radius: 18px;
+
+        padding: 25px;
+
+        margin-top: 20px;
+
+        color: white;
+    }
+
+
+    /* ================================
+       DASHBOARD CARD
+       ================================ */
+
+    .dashboard-card {
+        background: #171b21;
+
+        border: 1px solid #30353e;
+
+        border-radius: 18px;
+
+        padding: 20px;
+
+        min-height: 130px;
+
         text-align: center;
 
-        background: rgba(128, 128, 128, 0.08);
-
-        border: 1px solid
-        rgba(128, 128, 128, 0.25);
+        margin-bottom: 20px;
     }
+
+    .dashboard-card h4 {
+        color: #aeb6c2;
+        margin-bottom: 10px;
+    }
+
+    .dashboard-card .value {
+        color: #ffffff;
+        font-size: 25px;
+        font-weight: 700;
+    }
+
+
+    /* ================================
+       ABOUT
+       ================================ */
+
+    .about-box {
+        background: #171b21;
+
+        border: 1px solid #30353e;
+
+        border-radius: 18px;
+
+        padding: 30px;
+
+        color: #e4e8ed;
+
+        line-height: 1.8;
+    }
+
+    .about-box h2 {
+        color: white;
+    }
+
+    .about-box h3 {
+        color: #5be89b;
+        margin-top: 25px;
+    }
+
+
+    /* ================================
+       FOOTER
+       ================================ */
 
     .footer {
-        margin-top: 45px;
-        padding: 20px;
+        background: #063b27;
+
+        color: #e5fff0;
+
         text-align: center;
-        border-radius: 16px;
 
-        background: #073b28;
-        color: white !important;
+        padding: 25px;
+
+        border-radius: 18px;
+
+        margin-top: 50px;
+
+        border: 1px solid #0b7148;
     }
 
-    .footer p {
-        color: white !important;
+
+    /* ================================
+       BUTTON
+       ================================ */
+
+    div.stButton > button {
+        background: #087f49;
+        color: white;
+
+        border: none;
+
+        border-radius: 10px;
+
+        padding: 10px 22px;
+
+        font-weight: 600;
     }
 
-    </style>
+    div.stButton > button:hover {
+        background: #0aa45e;
+        color: white;
+    }
+
+</style>
+""",
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# SESSION STATE
+# ============================================================
+
+if "weather_data" not in st.session_state:
+    st.session_state.weather_data = None
+
+
+if "manual_weather" not in st.session_state:
+    st.session_state.manual_weather = {
+        "temperature": 25.0,
+        "humidity": 70.0,
+        "rainfall": 100.0
+    }
+
+
+if "crop_weather" not in st.session_state:
+    st.session_state.crop_weather = None
+
+
+if "crop_prediction" not in st.session_state:
+    st.session_state.crop_prediction = None
+
+
+if "yield_prediction" not in st.session_state:
+    st.session_state.yield_prediction = None
+
+
+if "cost_prediction" not in st.session_state:
+    st.session_state.cost_prediction = None
+
+
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+
+# ============================================================
+# HELPER FUNCTIONS
+# ============================================================
+
+def add_history(prediction_type, result, inputs=None):
+    """
+    Prediction History me result save karta hai.
+    """
+
+    st.session_state.history.append(
+        {
+            "type": prediction_type,
+            "result": str(result),
+            "inputs": inputs or {}
+        }
+    )
+
+
+def get_weather(city):
+    """
+    OpenWeather API se weather data fetch karta hai.
+    """
+
+    if not WEATHER_API_KEY:
+        return None, "OPENWEATHER_API_KEY is not configured."
+
+    try:
+
+        response = requests.get(
+            WEATHER_URL,
+            params={
+                "q": city,
+                "appid": WEATHER_API_KEY,
+                "units": "metric"
+            },
+            timeout=15
+        )
+
+        try:
+            data = response.json()
+        except Exception:
+            data = {}
+
+        if response.status_code == 200:
+
+            return data, None
+
+        message = data.get(
+            "message",
+            "Unable to fetch weather."
+        )
+
+        return None, message
+
+    except requests.exceptions.Timeout:
+
+        return None, "Weather API request timed out."
+
+    except requests.exceptions.ConnectionError:
+
+        return None, "Could not connect to weather service."
+
+    except Exception as e:
+
+        return None, str(e)
+
+
+def call_fastapi(endpoint, payload):
+    """
+    FastAPI endpoint ko POST request bhejta hai.
+    """
+
+    try:
+
+        response = requests.post(
+            f"{API_URL}{endpoint}",
+            json=payload,
+            timeout=60
+        )
+
+        try:
+            data = response.json()
+        except Exception:
+            data = {
+                "raw_response": response.text
+            }
+
+        if response.status_code == 200:
+
+            return data, None
+
+        return None, (
+            f"API Error {response.status_code}: "
+            f"{response.text}"
+        )
+
+    except requests.exceptions.Timeout:
+
+        return None, (
+            "FastAPI request timed out. "
+            "Please check whether your Render API service is running."
+        )
+
+    except requests.exceptions.ConnectionError:
+
+        return None, (
+            "Could not connect to FastAPI. "
+            "Check FASTAPI_URL."
+        )
+
+    except Exception as e:
+
+        return None, str(e)
+
+
+def show_weather_card(data):
+    """
+    Weather data ko UI me display karta hai.
+    """
+
+    if not data:
+        return
+
+    temperature = data.get("main", {}).get(
+        "temp",
+        "N/A"
+    )
+
+    humidity = data.get("main", {}).get(
+        "humidity",
+        "N/A"
+    )
+
+    pressure = data.get("main", {}).get(
+        "pressure",
+        "N/A"
+    )
+
+    wind = data.get("wind", {}).get(
+        "speed",
+        "N/A"
+    )
+
+    rainfall = data.get(
+        "rain",
+        {}
+    ).get(
+        "1h",
+        0
+    )
+
+    weather_list = data.get(
+        "weather",
+        []
+    )
+
+    description = "N/A"
+
+    if weather_list:
+        description = weather_list[0].get(
+            "description",
+            "N/A"
+        ).title()
+
+    city_name = data.get(
+        "name",
+        "Unknown"
+    )
+
+    country = data.get(
+        "sys",
+        {}
+    ).get(
+        "country",
+        ""
+    )
+
+    st.markdown(
+        f"""
+        <div class="weather-card">
+
+            <h2>🌦️ {city_name}, {country}</h2>
+
+            <p>
+                Current Condition:
+                <b>{description}</b>
+            </p>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    with col1:
+
+        st.metric(
+            "🌡️ Temperature",
+            f"{temperature} °C"
+        )
+
+    with col2:
+
+        st.metric(
+            "💧 Humidity",
+            f"{humidity}%"
+        )
+
+    with col3:
+
+        st.metric(
+            "💨 Wind",
+            f"{wind} m/s"
+        )
+
+    with col4:
+
+        st.metric(
+            "🌧️ Rainfall",
+            f"{rainfall} mm"
+        )
+
+    with col5:
+
+        st.metric(
+            "🔵 Pressure",
+            f"{pressure} hPa"
+        )
+
+
+# ============================================================
+# LANGUAGE
+# ============================================================
+
+st.sidebar.markdown(
+    "### 🌐 Language / भाषा"
+)
+
+language = st.sidebar.radio(
+    "Select Language",
+    [
+        "English",
+        "हिंदी"
+    ],
+    label_visibility="collapsed"
+)
+
+
+# ============================================================
+# SIDEBAR BRAND
+# ============================================================
+
+st.sidebar.markdown(
+    """
+    <div style="
+        text-align:center;
+        padding:20px 0 15px 0;
+    ">
+
+        <div style="
+            font-size:40px;
+        ">
+            🌱
+        </div>
+
+        <div style="
+            font-size:23px;
+            font-weight:700;
+            color:white;
+        ">
+            AgriSense AI
+        </div>
+
+    </div>
     """,
     unsafe_allow_html=True
 )
 
 
-# =========================================================
-# LANGUAGE
-# =========================================================
-
-language = st.sidebar.radio(
-    "Language / भाषा",
-    ["English", "हिंदी"]
-)
-
+# ============================================================
+# NAVIGATION LABELS
+# ============================================================
 
 if language == "English":
 
-    HOME = "Home"
-    WEATHER = "Weather"
-    CROP = "Crop Prediction"
-    YIELD = "Yield Prediction"
-    COST = "Cost Prediction"
-    DASHBOARD = "Farm Dashboard"
-    HISTORY = "Prediction History"
-    ABOUT = "About"
+    home_label = "Home"
+    weather_label = "Weather"
+    crop_label = "Crop Prediction"
+    yield_label = "Yield Prediction"
+    cost_label = "Cost Prediction"
+    dashboard_label = "Farm Dashboard"
+    history_label = "Prediction History"
+    about_label = "About"
 
 else:
 
-    HOME = "होम"
-    WEATHER = "मौसम"
-    CROP = "फसल भविष्यवाणी"
-    YIELD = "उत्पादन भविष्यवाणी"
-    COST = "लागत भविष्यवाणी"
-    DASHBOARD = "कृषि डैशबोर्ड"
-    HISTORY = "भविष्यवाणी इतिहास"
-    ABOUT = "हमारे बारे में"
+    home_label = "होम"
+    weather_label = "मौसम"
+    crop_label = "फसल भविष्यवाणी"
+    yield_label = "उत्पादन भविष्यवाणी"
+    cost_label = "लागत भविष्यवाणी"
+    dashboard_label = "फार्म डैशबोर्ड"
+    history_label = "भविष्यवाणी इतिहास"
+    about_label = "हमारे बारे में"
 
 
-# =========================================================
-# SESSION STATE
-# =========================================================
+# ============================================================
+# NAVIGATION
+# ============================================================
 
-if "weather" not in st.session_state:
-    st.session_state.weather = None
-
-if "weather_source" not in st.session_state:
-    st.session_state.weather_source = None
-
-if "history" not in st.session_state:
-    st.session_state.history = []
-
-if "last_crop" not in st.session_state:
-    st.session_state.last_crop = ""
-
-if "last_yield" not in st.session_state:
-    st.session_state.last_yield = ""
-
-if "last_cost" not in st.session_state:
-    st.session_state.last_cost = ""
-
-
-# =========================================================
-# SIDEBAR
-# =========================================================
-
-st.sidebar.title("🌱 AgriSense AI")
+st.sidebar.markdown(
+    "### 🧭 Navigation / नेविगेशन"
+)
 
 page = st.sidebar.radio(
-    "Navigation / नेविगेशन",
+    "Navigation",
     [
-        HOME,
-        WEATHER,
-        CROP,
-        YIELD,
-        COST,
-        DASHBOARD,
-        HISTORY,
-        ABOUT
-    ]
+        home_label,
+        weather_label,
+        crop_label,
+        yield_label,
+        cost_label,
+        dashboard_label,
+        history_label,
+        about_label
+    ],
+    label_visibility="collapsed"
 )
 
 
-# =========================================================
-# WEATHER FUNCTION
-# =========================================================
+# ============================================================
+# HOME PAGE
+# ============================================================
 
-def fetch_weather(village, district, state):
-
-    if not WEATHER_API_KEY:
-
-        return None, (
-            "OpenWeather API key is not configured."
-            if language == "English"
-            else
-            "OpenWeather API key configure नहीं है।"
-        )
-
-    village = village.strip()
-    district = district.strip()
-    state = state.strip()
-
-    locations = [
-        f"{village}, {district}, {state}, India",
-        f"{village}, {state}, India",
-        f"{district}, {state}, India"
-    ]
-
-    last_error = ""
-
-    for location in locations:
-
-        try:
-
-            response = requests.get(
-                WEATHER_URL,
-                params={
-                    "q": location,
-                    "appid": WEATHER_API_KEY,
-                    "units": "metric"
-                },
-                timeout=15
-            )
-
-            data = response.json()
-
-            if response.status_code == 200:
-
-                main = data.get(
-                    "main",
-                    {}
-                )
-
-                wind = data.get(
-                    "wind",
-                    {}
-                )
-
-                weather_list = data.get(
-                    "weather",
-                    [{}]
-                )
-
-                weather_info = weather_list[0]
-
-                rain = data.get(
-                    "rain",
-                    {}
-                )
-
-                rainfall = rain.get("1h")
-
-                if rainfall is None:
-                    rainfall = rain.get(
-                        "3h",
-                        0.0
-                    )
-
-                rainfall = float(
-                    rainfall or 0.0
-                )
-
-                result = {
-
-                    "city": data.get(
-                        "name",
-                        village
-                    ),
-
-                    "temperature": float(
-                        main.get(
-                            "temp",
-                            0
-                        )
-                    ),
-
-                    "humidity": float(
-                        main.get(
-                            "humidity",
-                            0
-                        )
-                    ),
-
-                    "wind": float(
-                        wind.get(
-                            "speed",
-                            0
-                        )
-                    ),
-
-                    "rainfall": rainfall,
-
-                    "condition":
-                        weather_info.get(
-                            "description",
-                            "N/A"
-                        ).title(),
-
-                    "searched_location":
-                        location
-                }
-
-                return result, None
-
-            last_error = data.get(
-                "message",
-                "Location not found"
-            )
-
-        except requests.RequestException as e:
-
-            last_error = str(e)
-
-    return None, last_error
-
-
-# =========================================================
-# HOME
-# =========================================================
-
-if page == HOME:
+if page == home_label:
 
     if language == "English":
 
-        st.markdown(
-            """
-            <div class="hero">
+        title = "AgriSense AI"
 
-                <h1>🌱 AgriSense AI</h1>
+        subtitle = (
+            "AI-Powered Agriculture "
+            "Decision Support System"
+        )
 
-                <h3>
-                    AI-Powered Agriculture Decision
-                    Support System
-                </h3>
-
-                <p>
-                    AgriSense AI combines Weather Information
-                    and Machine Learning to help farmers make
-                    smarter farming decisions.
-                </p>
-
-            </div>
-            """,
-            unsafe_allow_html=True
+        description = (
+            "AgriSense AI combines weather information "
+            "and Machine Learning to help farmers make "
+            "smarter farming decisions."
         )
 
     else:
 
-        st.markdown(
-            """
-            <div class="hero">
+        title = "AgriSense AI"
 
-                <h1>🌱 AgriSense AI</h1>
-
-                <h3>
-                    AI आधारित कृषि निर्णय सहायता प्रणाली
-                </h3>
-
-                <p>
-                    AgriSense AI मौसम की जानकारी और
-                    Machine Learning का उपयोग करके
-                    किसानों को बेहतर कृषि निर्णय लेने
-                    में सहायता करता है।
-                </p>
-
-            </div>
-            """,
-            unsafe_allow_html=True
+        subtitle = (
+            "AI आधारित कृषि "
+            "निर्णय सहायता प्रणाली"
         )
 
-    st.image(
-        "https://images.unsplash.com/"
-        "photo-1625246333195-78d9c38ad449"
-        "?auto=format&fit=crop&w=1600&q=85",
-        use_container_width=True
-    )
-
-    st.header(
-        "🌾 Key Features"
-        if language == "English"
-        else
-        "🌾 मुख्य विशेषताएँ"
-    )
-
-    features = [
-
-        (
-            "🌦️",
-            "Automatic Weather"
-            if language == "English"
-            else
-            "Automatic Weather",
-            "Get weather using Village, District "
-            "and State."
-            if language == "English"
-            else
-            "गाँव, जिला और राज्य से मौसम की जानकारी प्राप्त करें।"
-        ),
-
-        (
-            "✍️",
-            "Manual Weather"
-            if language == "English"
-            else
-            "Manual Weather",
-            "Enter Temperature, Humidity and "
-            "Rainfall manually."
-            if language == "English"
-            else
-            "Temperature, Humidity और Rainfall "
-            "खुद भरें।"
-        ),
-
-        (
-            "🌱",
-            "Crop Recommendation"
-            if language == "English"
-            else
-            "फसल की सिफारिश",
-            "AI-based crop recommendation using "
-            "soil and weather data."
-            if language == "English"
-            else
-            "मिट्टी और मौसम के आधार पर "
-            "AI से फसल की सिफारिश।"
-        ),
-
-        (
-            "🌾",
-            "Yield Prediction"
-            if language == "English"
-            else
-            "उत्पादन भविष्यवाणी",
-            "Predict yield using crop, state, "
-            "season and area."
-            if language == "English"
-            else
-            "फसल, राज्य, सीजन और क्षेत्रफल से "
-            "उत्पादन का अनुमान।"
-        ),
-
-        (
-            "💰",
-            "Cost Prediction"
-            if language == "English"
-            else
-            "लागत भविष्यवाणी",
-            "Estimate agricultural investment cost."
-            if language == "English"
-            else
-            "कृषि निवेश लागत का अनुमान लगाएँ।"
-        ),
-
-        (
-            "📊",
-            "Farm Dashboard"
-            if language == "English"
-            else
-            "कृषि डैशबोर्ड",
-            "See important prediction information "
-            "in one place."
-            if language == "English"
-            else
-            "जरूरी prediction information एक ही जगह देखें।"
+        description = (
+            "AgriSense AI मौसम की जानकारी और "
+            "Machine Learning को मिलाकर किसानों को "
+            "बेहतर कृषि निर्णय लेने में सहायता करता है।"
         )
-    ]
 
-    for i in range(0, len(features), 3):
-
-        cols = st.columns(3)
-
-        for col, item in zip(
-            cols,
-            features[i:i + 3]
-        ):
-
-            icon, title, text = item
-
-            with col:
-
-                st.markdown(
-                    f"""
-                    <div class="feature-card">
-
-                        <h3>
-                            {icon} {title}
-                        </h3>
-
-                        <p>
-                            {text}
-                        </p>
-
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-    st.header(
-        "🌍 About AgriSense AI"
-        if language == "English"
-        else
-        "🌍 AgriSense AI के बारे में"
-    )
-
+    # HERO
     st.markdown(
-        """
-        <div class="info-card">
+        f"""
+        <div class="hero">
 
-        <p>
-        AgriSense AI is designed to bring modern
-        Artificial Intelligence and Machine Learning
-        into agriculture.
-        </p>
+            <h1>🌱 {title}</h1>
 
-        <p>
-        Farmers can use automatic weather data or
-        manually enter weather values. The selected
-        weather information can then be used for
-        AI-based crop prediction.
-        </p>
+            <h3>{subtitle}</h3>
+
+            <p>{description}</p>
 
         </div>
         """,
@@ -580,150 +785,268 @@ if page == HOME:
     )
 
 
-# =========================================================
-# WEATHER
-# =========================================================
-
-elif page == WEATHER:
-
-    st.title(
-        "🌦️ Weather"
-        if language == "English"
-        else
-        "🌦️ मौसम"
+    # IMAGE
+    st.image(
+        "https://images.unsplash.com/photo-1625246333195-78d9c38ad449"
+        "?auto=format&fit=crop&w=1600&q=85",
+        use_container_width=True
     )
+
+
+    if language == "English":
+
+        st.markdown(
+            '<div class="section-title">'
+            '🌾 Smart Agriculture Features'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+    else:
+
+        st.markdown(
+            '<div class="section-title">'
+            '🌾 स्मार्ट कृषि सुविधाएँ'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+
+    # ROW 1
+
+    col1, col2, col3 = st.columns(3)
+
+
+    with col1:
+
+        st.markdown(
+            """
+            <div class="feature-card">
+
+                <h3>🌦️ Automatic Weather</h3>
+
+                <p>
+                    Enter your village or city and get
+                    current weather information such as
+                    temperature, humidity, rainfall and wind.
+                </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    with col2:
+
+        st.markdown(
+            """
+            <div class="feature-card">
+
+                <h3>✍️ Manual Weather</h3>
+
+                <p>
+                    If automatic weather is unavailable,
+                    users can manually enter temperature,
+                    humidity and rainfall.
+                </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    with col3:
+
+        st.markdown(
+            """
+            <div class="feature-card">
+
+                <h3>🌱 Crop Recommendation</h3>
+
+                <p>
+                    Use soil nutrients and weather
+                    conditions to get an AI-based
+                    crop recommendation.
+                </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    # ROW 2
+
+    col4, col5, col6 = st.columns(3)
+
+
+    with col4:
+
+        st.markdown(
+            """
+            <div class="feature-card">
+
+                <h3>🌾 Yield Prediction</h3>
+
+                <p>
+                    Predict expected agricultural yield
+                    using crop, state, season and area.
+                </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    with col5:
+
+        st.markdown(
+            """
+            <div class="feature-card">
+
+                <h3>💰 Cost Prediction</h3>
+
+                <p>
+                    Estimate agricultural investment
+                    cost using crop, state and yield.
+                </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    with col6:
+
+        st.markdown(
+            """
+            <div class="feature-card">
+
+                <h3>📊 Farm Dashboard</h3>
+
+                <p>
+                    View weather, crop prediction,
+                    yield prediction and cost
+                    information in one place.
+                </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+# ============================================================
+# WEATHER PAGE
+# ============================================================
+
+elif page == weather_label:
+
+    st.title("🌦️ Weather / मौसम")
 
     st.write(
-        "Choose how you want to provide weather data."
+        "Get current weather information for your "
+        "village or city."
         if language == "English"
         else
-        "चुनें कि आप Weather Data किस तरह देना चाहते हैं।"
+        "अपने गांव या शहर की वर्तमान मौसम जानकारी प्राप्त करें।"
     )
 
+
     weather_mode = st.radio(
-        "Weather Input Mode / Weather Input तरीका",
+        "Weather Input Method / मौसम का तरीका",
         [
             "Automatic Weather",
             "Manual Weather"
-        ],
-        horizontal=True
+        ]
+        if language == "English"
+        else
+        [
+            "Automatic मौसम",
+            "Manual मौसम"
+        ]
     )
 
-    # =====================================================
-    # AUTOMATIC WEATHER
-    # =====================================================
 
-    if weather_mode == "Automatic Weather":
+    # --------------------------------------------------------
+    # AUTOMATIC WEATHER
+    # --------------------------------------------------------
+
+    if weather_mode in [
+        "Automatic Weather",
+        "Automatic मौसम"
+    ]:
 
         st.subheader(
             "📍 Automatic Weather"
             if language == "English"
             else
-            "📍 Automatic Weather"
+            "📍 Automatic मौसम"
         )
 
-        c1, c2, c3 = st.columns(3)
-
-        with c1:
-
-            village = st.text_input(
-                "Village / गाँव",
-                placeholder="Malihabad"
-            )
-
-        with c2:
-
-            district = st.text_input(
-                "District / जिला",
-                placeholder="Lucknow"
-            )
-
-        with c3:
-
-            state = st.text_input(
-                "State / राज्य",
-                placeholder="Uttar Pradesh"
-            )
-
-        st.info(
-            "The system will try Village + District + State "
-            "first. If unavailable, it will try other "
-            "available locations."
-            if language == "English"
-            else
-            "System पहले Village + District + State को "
-            "search करेगा। उपलब्ध न होने पर दूसरे "
-            "available location को try करेगा।"
+        city = st.text_input(
+            "Village / City / गांव / शहर",
+            placeholder="Prayagraj"
         )
+
 
         if st.button(
-            "🌦️ Fetch Automatic Weather"
-            if language == "English"
-            else
-            "🌦️ Automatic Weather प्राप्त करें",
-            type="primary",
-            use_container_width=True
+            "🌦️ Get Weather / मौसम देखें",
+            type="primary"
         ):
 
-            if (
-                not village.strip()
-                or not district.strip()
-                or not state.strip()
-            ):
+            if not city.strip():
 
                 st.warning(
-                    "Please fill Village, District and State."
+                    "Please enter village or city name."
                     if language == "English"
                     else
-                    "कृपया Village, District और State भरें।"
+                    "कृपया गांव या शहर का नाम डालें।"
                 )
 
             else:
 
                 with st.spinner(
                     "Fetching weather..."
-                    if language == "English"
-                    else
-                    "मौसम की जानकारी प्राप्त की जा रही है..."
                 ):
 
-                    weather, error = fetch_weather(
-                        village,
-                        district,
-                        state
+                    data, error = get_weather(
+                        city.strip()
                     )
 
-                if weather:
 
-                    st.session_state.weather = weather
+                if error:
 
-                    st.session_state.weather_source = (
-                        "Automatic"
-                    )
-
-                    st.success(
-                        "Weather data fetched successfully."
-                        if language == "English"
-                        else
-                        "Weather data सफलतापूर्वक प्राप्त हो गया।"
+                    st.error(
+                        f"Weather Error: {error}"
                     )
 
                 else:
 
-                    st.error(
-                        "Weather data could not be fetched."
+                    st.session_state.weather_data = data
+
+                    st.success(
+                        "Weather data loaded successfully."
                         if language == "English"
                         else
-                        "Weather data प्राप्त नहीं हो सका।"
+                        "मौसम की जानकारी सफलतापूर्वक प्राप्त हो गई।"
                     )
 
-                    st.caption(
-                        f"API response: {error}"
-                    )
 
-    # =====================================================
+        if st.session_state.weather_data:
+
+            show_weather_card(
+                st.session_state.weather_data
+            )
+
+
+    # --------------------------------------------------------
     # MANUAL WEATHER
-    # =====================================================
+    # --------------------------------------------------------
 
     else:
 
@@ -731,1119 +1054,1058 @@ elif page == WEATHER:
             "✍️ Manual Weather"
             if language == "English"
             else
-            "✍️ Manual Weather"
+            "✍️ Manual मौसम"
         )
 
-        st.info(
-            "Enter the weather values yourself. These "
-            "values can be used directly in Crop Prediction."
-            if language == "English"
-            else
-            "Weather values खुद भरें। ये values सीधे "
-            "Crop Prediction में इस्तेमाल की जा सकती हैं।"
+
+        temperature = st.number_input(
+            "🌡️ Temperature (°C)",
+            value=float(
+                st.session_state.manual_weather[
+                    "temperature"
+                ]
+            )
         )
 
-        c1, c2, c3 = st.columns(3)
 
-        with c1:
-
-            manual_temperature = st.number_input(
-                "Temperature (°C)",
-                value=25.0,
-                step=0.1
+        humidity = st.number_input(
+            "💧 Humidity (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=float(
+                st.session_state.manual_weather[
+                    "humidity"
+                ]
             )
+        )
 
-        with c2:
 
-            manual_humidity = st.number_input(
-                "Humidity (%)",
-                min_value=0.0,
-                max_value=100.0,
-                value=70.0,
-                step=1.0
+        rainfall = st.number_input(
+            "🌧️ Rainfall (mm)",
+            min_value=0.0,
+            value=float(
+                st.session_state.manual_weather[
+                    "rainfall"
+                ]
             )
+        )
 
-        with c3:
-
-            manual_rainfall = st.number_input(
-                "Rainfall (mm)",
-                min_value=0.0,
-                value=100.0,
-                step=0.1
-            )
 
         if st.button(
-            "💾 Use Manual Weather"
-            if language == "English"
-            else
-            "💾 Manual Weather इस्तेमाल करें",
-            type="primary",
-            use_container_width=True
+            "💾 Save Weather Data",
+            type="primary"
         ):
 
-            st.session_state.weather = {
-
-                "city": "Manual Input",
-
-                "temperature":
-                    manual_temperature,
-
-                "humidity":
-                    manual_humidity,
-
-                "wind":
-                    0.0,
-
-                "rainfall":
-                    manual_rainfall,
-
-                "condition":
-                    "Manual Weather",
-
-                "searched_location":
-                    "Manual Input"
+            st.session_state.manual_weather = {
+                "temperature": temperature,
+                "humidity": humidity,
+                "rainfall": rainfall
             }
-
-            st.session_state.weather_source = (
-                "Manual"
-            )
 
             st.success(
                 "Manual weather data saved."
                 if language == "English"
                 else
-                "Manual weather data save हो गया।"
+                "Manual मौसम डेटा सेव हो गया।"
             )
 
-    # =====================================================
-    # SHOW WEATHER DATA
-    # =====================================================
 
-    if st.session_state.weather:
+        st.markdown(
+            """
+            <div class="info-box">
 
-        weather = st.session_state.weather
+                🌱 These weather values can be used
+                as input for Crop Prediction.
 
-        st.divider()
-
-        st.subheader(
-            "🌦️ Selected Weather Data"
-            if language == "English"
-            else
-            "🌦️ Selected Weather Data"
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-        if st.session_state.weather_source == "Automatic":
 
-            st.caption(
-                "Source: Automatic / OpenWeather"
-                if language == "English"
-                else
-                "Source: Automatic / OpenWeather"
+# ============================================================
+# CROP PREDICTION
+# ============================================================
+
+elif page == crop_label:
+
+    st.title(
+        "🌱 Crop Prediction / फसल भविष्यवाणी"
+    )
+
+    st.write(
+        "Enter soil and weather conditions to get "
+        "an AI-based crop recommendation."
+        if language == "English"
+        else
+        "मिट्टी और मौसम की जानकारी डालकर "
+        "AI आधारित फसल की सिफारिश प्राप्त करें।"
+    )
+
+
+    # --------------------------------------------------------
+    # WEATHER INPUT
+    # --------------------------------------------------------
+
+    st.subheader(
+        "🌦️ Weather Information"
+        if language == "English"
+        else
+        "🌦️ मौसम की जानकारी"
+    )
+
+
+    weather_source = st.radio(
+        "Select Weather Source",
+        [
+            "Use Automatic Weather",
+            "Enter Weather Manually"
+        ]
+        if language == "English"
+        else
+        [
+            "Automatic मौसम इस्तेमाल करें",
+            "मौसम manually भरें"
+        ]
+    )
+
+
+    # --------------------------------------------------------
+    # AUTOMATIC WEATHER
+    # --------------------------------------------------------
+
+    if weather_source == "Use Automatic Weather":
+
+        city = st.text_input(
+            "Village / City",
+            placeholder="Prayagraj"
+        )
+
+
+        if st.button(
+            "🌦️ Load Weather"
+        ):
+
+            if not city.strip():
+
+                st.warning(
+                    "Please enter village or city."
+                )
+
+            else:
+
+                data, error = get_weather(
+                    city.strip()
+                )
+
+                if error:
+
+                    st.error(
+                        f"Weather Error: {error}"
+                    )
+
+                else:
+
+                    st.session_state.crop_weather = {
+                        "temperature":
+                            data["main"]["temp"],
+
+                        "humidity":
+                            data["main"]["humidity"],
+
+                        "rainfall":
+                            data.get(
+                                "rain",
+                                {}
+                            ).get(
+                                "1h",
+                                0
+                            )
+                    }
+
+                    st.success(
+                        f"Weather loaded for {data.get('name', city)}."
+                    )
+
+
+        weather = st.session_state.crop_weather
+
+
+        if weather:
+
+            temperature = st.number_input(
+                "🌡️ Temperature (°C)",
+                value=float(
+                    weather["temperature"]
+                )
+            )
+
+
+            humidity = st.number_input(
+                "💧 Humidity (%)",
+                min_value=0.0,
+                max_value=100.0,
+                value=float(
+                    weather["humidity"]
+                )
+            )
+
+
+            rainfall = st.number_input(
+                "🌧️ Rainfall (mm)",
+                min_value=0.0,
+                value=float(
+                    weather["rainfall"]
+                )
             )
 
         else:
 
-            st.caption(
-                "Source: Manual Input"
-                if language == "English"
-                else
-                "Source: Manual Input"
+            st.info(
+                "Enter a city and click Load Weather."
             )
 
-        c1, c2, c3, c4 = st.columns(4)
-
-        with c1:
-
-            st.metric(
-                "🌡️ Temperature",
-                f"{weather['temperature']:.1f} °C"
+            temperature = st.number_input(
+                "🌡️ Temperature (°C)",
+                value=25.0
             )
 
-        with c2:
-
-            st.metric(
-                "💧 Humidity",
-                f"{weather['humidity']:.0f}%"
+            humidity = st.number_input(
+                "💧 Humidity (%)",
+                min_value=0.0,
+                max_value=100.0,
+                value=70.0
             )
 
-        with c3:
-
-            st.metric(
-                "🌧️ Rainfall",
-                f"{weather['rainfall']:.1f} mm"
+            rainfall = st.number_input(
+                "🌧️ Rainfall (mm)",
+                min_value=0.0,
+                value=100.0
             )
 
-        with c4:
 
-            st.metric(
-                "💨 Wind",
-                f"{weather['wind']:.1f} m/s"
-            )
+    # --------------------------------------------------------
+    # MANUAL WEATHER
+    # --------------------------------------------------------
 
-        st.success(
-            "This selected weather data is available "
-            "for Crop Prediction."
-            if language == "English"
-            else
-            "यह selected weather data Crop Prediction "
-            "में इस्तेमाल किया जा सकता है।"
+    else:
+
+        temperature = st.number_input(
+            "🌡️ Temperature (°C)",
+            value=25.0
         )
 
 
-# =========================================================
-# CROP PREDICTION
-# POST /predict1
-# =========================================================
+        humidity = st.number_input(
+            "💧 Humidity (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=70.0
+        )
 
-elif page == CROP:
 
-    st.title(
-        "🌱 Crop Prediction"
-        if language == "English"
-        else
-        "🌱 फसल भविष्यवाणी"
+        rainfall = st.number_input(
+            "🌧️ Rainfall (mm)",
+            min_value=0.0,
+            value=100.0
+        )
+
+
+    # --------------------------------------------------------
+    # SOIL INPUT
+    # --------------------------------------------------------
+
+    st.subheader(
+        "🌱 Soil Information"
     )
+
+
+    col1, col2, col3 = st.columns(3)
+
+
+    with col1:
+
+        nitrogen = st.number_input(
+            "Nitrogen (N)",
+            min_value=0.0,
+            value=50.0
+        )
+
+
+    with col2:
+
+        phosphorus = st.number_input(
+            "Phosphorus (P)",
+            min_value=0.0,
+            value=40.0
+        )
+
+
+    with col3:
+
+        potassium = st.number_input(
+            "Potassium (K)",
+            min_value=0.0,
+            value=40.0
+        )
+
+
+    ph = st.number_input(
+        "Soil pH",
+        min_value=0.0,
+        max_value=14.0,
+        value=6.5
+    )
+
 
     st.markdown(
         """
-        <div class="info-card">
+        <div class="info-box">
 
-        <h3>🌦️ Weather Data → Crop Prediction</h3>
+            🌱 Crop prediction uses:
 
-        <p>
-        You can choose <b>Automatic Weather</b> or
-        <b>Manual Weather</b>. The selected Temperature,
-        Humidity and Rainfall will be sent to the
-        Crop Prediction API.
-        </p>
+            <br><br>
+
+            Nitrogen + Phosphorus + Potassium +
+            Temperature + Humidity + pH + Rainfall
 
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    st.write("")
 
-    # =====================================================
-    # WEATHER SOURCE SELECTION
-    # =====================================================
-
-    crop_weather_mode = st.radio(
-        "Select Weather Source / Weather Source चुनें",
-        [
-            "Use Automatic Weather",
-            "Enter Weather Manually"
-        ],
-        horizontal=True
-    )
-
-    # =====================================================
-    # AUTOMATIC WEATHER FOR CROP
-    # =====================================================
-
-    if crop_weather_mode == "Use Automatic Weather":
-
-        if (
-            st.session_state.weather
-            and
-            st.session_state.weather_source
-            == "Automatic"
-        ):
-
-            weather = st.session_state.weather
-
-            st.success(
-                f"Using automatic weather for "
-                f"{weather['city']}."
-                if language == "English"
-                else
-                f"{weather['city']} का automatic weather use हो रहा है।"
-            )
-
-            c1, c2, c3 = st.columns(3)
-
-            with c1:
-
-                temperature = st.number_input(
-                    "Temperature (°C)",
-                    value=float(
-                        weather["temperature"]
-                    ),
-                    step=0.1,
-                    key="crop_auto_temp"
-                )
-
-            with c2:
-
-                humidity = st.number_input(
-                    "Humidity (%)",
-                    min_value=0.0,
-                    max_value=100.0,
-                    value=float(
-                        weather["humidity"]
-                    ),
-                    step=1.0,
-                    key="crop_auto_humidity"
-                )
-
-            with c3:
-
-                rainfall = st.number_input(
-                    "Rainfall (mm)",
-                    min_value=0.0,
-                    value=float(
-                        weather["rainfall"]
-                    ),
-                    step=0.1,
-                    key="crop_auto_rainfall"
-                )
-
-        else:
-
-            st.warning(
-                "Automatic weather is not available. "
-                "Go to Weather page and fetch weather first."
-                if language == "English"
-                else
-                "Automatic weather उपलब्ध नहीं है। "
-                "पहले Weather page पर जाकर weather fetch करें।"
-            )
-
-            c1, c2, c3 = st.columns(3)
-
-            with c1:
-
-                temperature = st.number_input(
-                    "Temperature (°C)",
-                    value=25.0,
-                    key="crop_auto_temp_empty"
-                )
-
-            with c2:
-
-                humidity = st.number_input(
-                    "Humidity (%)",
-                    min_value=0.0,
-                    max_value=100.0,
-                    value=70.0,
-                    key="crop_auto_humidity_empty"
-                )
-
-            with c3:
-
-                rainfall = st.number_input(
-                    "Rainfall (mm)",
-                    min_value=0.0,
-                    value=100.0,
-                    key="crop_auto_rainfall_empty"
-                )
-
-    # =====================================================
-    # MANUAL WEATHER FOR CROP
-    # =====================================================
-
-    else:
-
-        st.info(
-            "Enter weather values manually."
-            if language == "English"
-            else
-            "Weather values manually भरें।"
-        )
-
-        c1, c2, c3 = st.columns(3)
-
-        with c1:
-
-            temperature = st.number_input(
-                "Temperature (°C)",
-                value=25.0,
-                step=0.1,
-                key="crop_manual_temp"
-            )
-
-        with c2:
-
-            humidity = st.number_input(
-                "Humidity (%)",
-                min_value=0.0,
-                max_value=100.0,
-                value=70.0,
-                step=1.0,
-                key="crop_manual_humidity"
-            )
-
-        with c3:
-
-            rainfall = st.number_input(
-                "Rainfall (mm)",
-                min_value=0.0,
-                value=100.0,
-                step=0.1,
-                key="crop_manual_rainfall"
-            )
-
-    # =====================================================
-    # SOIL INPUT
-    # =====================================================
-
-    st.subheader(
-        "🌱 Soil Parameters"
-        if language == "English"
-        else
-        "🌱 मिट्टी के Parameters"
-    )
-
-    c1, c2, c3, c4 = st.columns(4)
-
-    with c1:
-
-        N = st.number_input(
-            "Nitrogen (N)",
-            min_value=0.0,
-            value=50.0,
-            step=1.0
-        )
-
-    with c2:
-
-        P = st.number_input(
-            "Phosphorus (P)",
-            min_value=0.0,
-            value=40.0,
-            step=1.0
-        )
-
-    with c3:
-
-        K = st.number_input(
-            "Potassium (K)",
-            min_value=0.0,
-            value=40.0,
-            step=1.0
-        )
-
-    with c4:
-
-        ph = st.number_input(
-            "Soil pH",
-            min_value=0.0,
-            max_value=14.0,
-            value=6.5,
-            step=0.1
-        )
-
-    st.divider()
+    # --------------------------------------------------------
+    # PREDICTION
+    # --------------------------------------------------------
 
     if st.button(
-        "🌱 Predict Crop"
-        if language == "English"
-        else
-        "🌱 फसल बताएँ",
-        type="primary",
-        use_container_width=True
+        "🌱 Predict Crop / फसल बताएँ",
+        type="primary"
     ):
 
         payload = {
 
-            "N":
-                N,
+            "N": nitrogen,
 
-            "P":
-                P,
+            "P": phosphorus,
 
-            "K":
-                K,
+            "K": potassium,
 
-            "temperature":
-                temperature,
+            "temperature": temperature,
 
-            "humidity":
-                humidity,
+            "humidity": humidity,
 
-            "ph":
-                ph,
+            "ph": ph,
 
-            "rainfall":
-                rainfall
+            "rainfall": rainfall
         }
 
-        try:
 
-            response = requests.post(
-                f"{API_URL}/predict1",
-                json=payload,
-                timeout=30
+        with st.spinner(
+            "Running ML model..."
+        ):
+
+            result, error = call_fastapi(
+                "/predict1",
+                payload
             )
 
-            if response.status_code == 200:
 
-                result = response.json()
+        if error:
 
-                crop_result = result.get(
-                    "predict_crop",
-                    "N/A"
+            st.error(error)
+
+        else:
+
+            prediction = result.get(
+                "predict_crop",
+                result.get(
+                    "prediction",
+                    result.get(
+                        "crop",
+                        "Prediction received"
+                    )
+                )
+            )
+
+
+            st.session_state.crop_prediction = prediction
+
+
+            add_history(
+                "Crop Prediction",
+                prediction,
+                payload
+            )
+
+
+            st.markdown(
+                f"""
+                <div class="result-box">
+
+                    <h2>🌾 Recommended Crop</h2>
+
+                    <div class="result-value">
+                        {prediction}
+                    </div>
+
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+
+# ============================================================
+# YIELD PREDICTION
+# ============================================================
+
+elif page == yield_label:
+
+    st.title(
+        "🌾 Yield Prediction / उत्पादन भविष्यवाणी"
+    )
+
+
+    st.write(
+        "Predict agricultural yield using crop, state, "
+        "season and area."
+    )
+
+
+    crop = st.text_input(
+        "🌱 Crop / फसल",
+        placeholder="Rice"
+    )
+
+
+    state = st.text_input(
+        "📍 State / राज्य",
+        placeholder="Uttar Pradesh"
+    )
+
+
+    season = st.text_input(
+        "🌦️ Season / सीजन",
+        placeholder="Kharif"
+    )
+
+
+    area = st.number_input(
+        "📐 Area / क्षेत्रफल",
+        min_value=0.0,
+        value=1.0
+    )
+
+
+    st.markdown(
+        """
+        <div class="info-box">
+
+            ⚠️ Crop, State and Season values should
+            match the categories used while training
+            your ML model.
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+    if st.button(
+        "🌾 Predict Yield / उत्पादन बताएँ",
+        type="primary"
+    ):
+
+        if not crop.strip():
+
+            st.warning(
+                "Please enter crop."
+            )
+
+        elif not state.strip():
+
+            st.warning(
+                "Please enter state."
+            )
+
+        elif not season.strip():
+
+            st.warning(
+                "Please enter season."
+            )
+
+        else:
+
+            payload = {
+
+                "Crop": crop.strip(),
+
+                "State": state.strip(),
+
+                "Season": season.strip(),
+
+                "Area": area
+            }
+
+
+            with st.spinner(
+                "Running Yield ML model..."
+            ):
+
+                result, error = call_fastapi(
+                    "/predict2",
+                    payload
                 )
 
-                st.session_state.last_crop = (
-                    crop_result
+
+            if error:
+
+                st.error(error)
+
+            else:
+
+                prediction = result.get(
+                    "predict_yield",
+                    result.get(
+                        "prediction",
+                        result.get(
+                            "yield",
+                            "Prediction received"
+                        )
+                    )
                 )
 
-                st.session_state.history.append({
 
-                    "Time":
-                        datetime.now().strftime(
-                            "%Y-%m-%d %H:%M:%S"
-                        ),
+                st.session_state.yield_prediction = (
+                    prediction
+                )
 
-                    "Type":
-                        "Crop Prediction",
 
-                    "Crop":
-                        crop_result,
+                add_history(
+                    "Yield Prediction",
+                    prediction,
+                    payload
+                )
 
-                    "Yield":
-                        "",
-
-                    "Cost":
-                        ""
-                })
 
                 st.markdown(
                     f"""
-                    <div class="result-card">
+                    <div class="result-box">
 
-                        <h2>
-                            🌾 Recommended Crop
-                        </h2>
+                        <h2>🌾 Predicted Yield</h2>
 
-                        <h3>
-                            {crop_result}
-                        </h3>
-
-                        <p>
-                            Weather Source:
-                            {crop_weather_mode}
-                        </p>
+                        <div class="result-value">
+                            {prediction}
+                        </div>
 
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
 
-            else:
 
-                st.error(
-                    f"Crop prediction failed. "
-                    f"({response.status_code})"
-                )
+# ============================================================
+# COST PREDICTION
+# ============================================================
 
-                st.code(
-                    response.text,
-                    language="json"
-                )
-
-        except requests.RequestException as e:
-
-            st.error(
-                f"Crop API request failed: {e}"
-            )
-
-
-# =========================================================
-# YIELD PREDICTION
-# POST /predict2
-# =========================================================
-
-elif page == YIELD:
+elif page == cost_label:
 
     st.title(
-        "🌾 Yield Prediction"
-        if language == "English"
-        else
-        "🌾 उत्पादन भविष्यवाणी"
+        "💰 Cost Prediction / लागत भविष्यवाणी"
     )
+
 
     st.write(
-        "Enter Crop, State, Season and Area "
-        "to predict agricultural yield."
-        if language == "English"
-        else
-        "Crop, State, Season और Area डालकर "
-        "कृषि उत्पादन का अनुमान लगाएँ।"
+        "Estimate agricultural investment cost "
+        "using crop, state and yield."
     )
 
-    c1, c2 = st.columns(2)
 
-    with c1:
-
-        crop = st.text_input(
-            "Crop / फसल",
-            placeholder="Rice"
-        )
-
-        state = st.text_input(
-            "State / राज्य",
-            placeholder="Uttar Pradesh"
-        )
-
-    with c2:
-
-        season = st.text_input(
-            "Season / सीजन",
-            placeholder="Kharif"
-        )
-
-        area = st.number_input(
-            "Area / क्षेत्रफल",
-            min_value=0.0,
-            value=1.0,
-            step=0.1
-        )
-
-    st.info(
-        "Crop, State and Season must match the labels "
-        "used during model training."
-        if language == "English"
-        else
-        "Crop, State और Season के नाम model training "
-        "के labels से match होने चाहिए।"
+    crop = st.text_input(
+        "🌱 Crop / फसल",
+        placeholder="Rice"
     )
 
-    if st.button(
-        "🌾 Predict Yield"
-        if language == "English"
-        else
-        "🌾 उत्पादन बताएँ",
-        type="primary",
-        use_container_width=True
-    ):
 
-        if (
-            not crop.strip()
-            or not state.strip()
-            or not season.strip()
-        ):
-
-            st.warning(
-                "Please fill all fields."
-                if language == "English"
-                else
-                "कृपया सभी fields भरें।"
-            )
-
-        else:
-
-            payload = {
-
-                "Crop":
-                    crop.strip(),
-
-                "State":
-                    state.strip(),
-
-                "Season":
-                    season.strip(),
-
-                "Area":
-                    area
-            }
-
-            try:
-
-                response = requests.post(
-                    f"{API_URL}/predict2",
-                    json=payload,
-                    timeout=30
-                )
-
-                if response.status_code == 200:
-
-                    result = response.json()
-
-                    yield_result = result.get(
-                        "predict_yield",
-                        "N/A"
-                    )
-
-                    st.session_state.last_yield = (
-                        yield_result
-                    )
-
-                    st.session_state.history.append({
-
-                        "Time":
-                            datetime.now().strftime(
-                                "%Y-%m-%d %H:%M:%S"
-                            ),
-
-                        "Type":
-                            "Yield Prediction",
-
-                        "Crop":
-                            crop.strip(),
-
-                        "Yield":
-                            yield_result,
-
-                        "Cost":
-                            ""
-                    })
-
-                    st.markdown(
-                        f"""
-                        <div class="result-card">
-
-                            <h2>
-                                🌾 Predicted Yield
-                            </h2>
-
-                            <h3>
-                                {yield_result}
-                            </h3>
-
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-
-                else:
-
-                    st.error(
-                        f"Yield prediction failed. "
-                        f"({response.status_code})"
-                    )
-
-                    st.code(
-                        response.text,
-                        language="json"
-                    )
-
-            except requests.RequestException as e:
-
-                st.error(
-                    f"Yield API request failed: {e}"
-                )
-
-
-# =========================================================
-# COST PREDICTION
-# POST /predict3
-# =========================================================
-
-elif page == COST:
-
-    st.title(
-        "💰 Cost Prediction"
-        if language == "English"
-        else
-        "💰 लागत भविष्यवाणी"
+    state = st.text_input(
+        "📍 State / राज्य",
+        placeholder="Uttar Pradesh"
     )
 
-    c1, c2 = st.columns(2)
-
-    with c1:
-
-        crop = st.text_input(
-            "Crop / फसल",
-            placeholder="Rice"
-        )
-
-    with c2:
-
-        state = st.text_input(
-            "State / राज्य",
-            placeholder="Uttar Pradesh"
-        )
 
     yield_value = st.number_input(
-        "Yield / उत्पादन",
+        "🌾 Yield / उत्पादन",
         min_value=0.0,
-        value=10.0,
-        step=0.1
+        value=10.0
     )
 
+
     if st.button(
-        "💰 Predict Cost"
-        if language == "English"
-        else
-        "💰 लागत बताएँ",
-        type="primary",
-        use_container_width=True
+        "💰 Predict Cost / लागत बताएँ",
+        type="primary"
     ):
 
-        if (
-            not crop.strip()
-            or not state.strip()
-        ):
+        if not crop.strip():
 
             st.warning(
-                "Please fill Crop and State."
-                if language == "English"
-                else
-                "कृपया Crop और State भरें।"
+                "Please enter crop."
+            )
+
+        elif not state.strip():
+
+            st.warning(
+                "Please enter state."
             )
 
         else:
 
             payload = {
 
-                "Crop":
-                    crop.strip(),
+                "Crop": crop.strip(),
 
-                "State":
-                    state.strip(),
+                "State": state.strip(),
 
-                "Yield":
-                    yield_value
+                "Yield": yield_value
             }
 
-            try:
 
-                response = requests.post(
-                    f"{API_URL}/predict3",
-                    json=payload,
-                    timeout=30
+            with st.spinner(
+                "Running Cost ML model..."
+            ):
+
+                result, error = call_fastapi(
+                    "/predict3",
+                    payload
                 )
 
-                if response.status_code == 200:
 
-                    result = response.json()
+            if error:
 
-                    cost_result = result.get(
-                        "predict_cost",
-                        "N/A"
+                st.error(error)
+
+            else:
+
+                prediction = result.get(
+                    "predict_cost",
+                    result.get(
+                        "prediction",
+                        result.get(
+                            "cost",
+                            "Prediction received"
+                        )
                     )
+                )
 
-                    st.session_state.last_cost = (
-                        cost_result
-                    )
 
-                    st.session_state.history.append({
+                st.session_state.cost_prediction = (
+                    prediction
+                )
 
-                        "Time":
-                            datetime.now().strftime(
-                                "%Y-%m-%d %H:%M:%S"
-                            ),
 
-                        "Type":
-                            "Cost Prediction",
+                add_history(
+                    "Cost Prediction",
+                    prediction,
+                    payload
+                )
 
-                        "Crop":
-                            crop.strip(),
 
-                        "Yield":
-                            yield_value,
+                st.markdown(
+                    f"""
+                    <div class="result-box">
 
-                        "Cost":
-                            cost_result
-                    })
+                        <h2>💰 Estimated Cost</h2>
 
-                    st.markdown(
-                        f"""
-                        <div class="result-card">
-
-                            <h2>
-                                💰 Estimated Cost
-                            </h2>
-
-                            <h3>
-                                {cost_result}
-                            </h3>
-
+                        <div class="result-value">
+                            {prediction}
                         </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
 
-                else:
-
-                    st.error(
-                        f"Cost prediction failed. "
-                        f"({response.status_code})"
-                    )
-
-                    st.code(
-                        response.text,
-                        language="json"
-                    )
-
-            except requests.RequestException as e:
-
-                st.error(
-                    f"Cost API request failed: {e}"
+                    </div>
+                    """,
+                    unsafe_allow_html=True
                 )
 
 
-# =========================================================
+# ============================================================
 # FARM DASHBOARD
-# =========================================================
+# ============================================================
 
-elif page == DASHBOARD:
+elif page == dashboard_label:
 
     st.title(
-        "📊 Farm Dashboard"
-        if language == "English"
-        else
-        "📊 कृषि डैशबोर्ड"
+        "📊 Farm Dashboard / फार्म डैशबोर्ड"
     )
 
-    c1, c2, c3 = st.columns(3)
 
-    with c1:
-
-        st.metric(
-            "🌱 Last Crop",
-            st.session_state.last_crop or "—"
-        )
-
-    with c2:
-
-        st.metric(
-            "🌾 Last Yield",
-            st.session_state.last_yield or "—"
-        )
-
-    with c3:
-
-        st.metric(
-            "💰 Last Cost",
-            st.session_state.last_cost or "—"
-        )
-
-    st.divider()
-
-    st.subheader(
-        "🌦️ Current Selected Weather"
-        if language == "English"
-        else
-        "🌦️ Selected Weather"
+    st.write(
+        "Your latest agriculture predictions and weather information."
     )
 
-    if st.session_state.weather:
 
-        weather = st.session_state.weather
+    # --------------------------------------------------------
+    # WEATHER
+    # --------------------------------------------------------
 
-        c1, c2, c3, c4 = st.columns(4)
+    weather = st.session_state.weather_data
 
-        with c1:
 
-            st.metric(
-                "Temperature",
-                f"{weather['temperature']:.1f} °C"
-            )
+    if weather:
 
-        with c2:
+        temperature = weather.get(
+            "main",
+            {}
+        ).get(
+            "temp",
+            "N/A"
+        )
 
-            st.metric(
-                "Humidity",
-                f"{weather['humidity']:.0f}%"
-            )
+        humidity = weather.get(
+            "main",
+            {}
+        ).get(
+            "humidity",
+            "N/A"
+        )
 
-        with c3:
+        rainfall = weather.get(
+            "rain",
+            {}
+        ).get(
+            "1h",
+            0
+        )
 
-            st.metric(
-                "Rainfall",
-                f"{weather['rainfall']:.1f} mm"
-            )
-
-        with c4:
-
-            st.metric(
-                "Wind",
-                f"{weather['wind']:.1f} m/s"
-            )
+        weather_city = weather.get(
+            "name",
+            "N/A"
+        )
 
     else:
 
-        st.info(
-            "No weather selected yet."
-            if language == "English"
-            else
-            "अभी कोई weather select नहीं किया गया है।"
+        temperature = "N/A"
+        humidity = "N/A"
+        rainfall = "N/A"
+        weather_city = "Not loaded"
+
+
+    # --------------------------------------------------------
+    # DASHBOARD
+    # --------------------------------------------------------
+
+    col1, col2, col3, col4 = st.columns(4)
+
+
+    with col1:
+
+        st.markdown(
+            f"""
+            <div class="dashboard-card">
+
+                <h4>🌦️ Weather</h4>
+
+                <div class="value">
+                    {weather_city}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
 
-# =========================================================
-# HISTORY
-# =========================================================
+    with col2:
 
-elif page == HISTORY:
+        st.markdown(
+            f"""
+            <div class="dashboard-card">
+
+                <h4>🌡️ Temperature</h4>
+
+                <div class="value">
+                    {temperature} °C
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    with col3:
+
+        st.markdown(
+            f"""
+            <div class="dashboard-card">
+
+                <h4>🌱 Crop</h4>
+
+                <div class="value">
+                    {st.session_state.crop_prediction or "Not predicted"}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    with col4:
+
+        st.markdown(
+            f"""
+            <div class="dashboard-card">
+
+                <h4>🌾 Yield</h4>
+
+                <div class="value">
+                    {st.session_state.yield_prediction or "Not predicted"}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    col5, col6, col7 = st.columns(3)
+
+
+    with col5:
+
+        st.markdown(
+            f"""
+            <div class="dashboard-card">
+
+                <h4>💰 Estimated Cost</h4>
+
+                <div class="value">
+                    {st.session_state.cost_prediction or "Not predicted"}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    with col6:
+
+        st.markdown(
+            f"""
+            <div class="dashboard-card">
+
+                <h4>💧 Humidity</h4>
+
+                <div class="value">
+                    {humidity}%
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    with col7:
+
+        st.markdown(
+            f"""
+            <div class="dashboard-card">
+
+                <h4>🌧️ Rainfall</h4>
+
+                <div class="value">
+                    {rainfall} mm
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    st.markdown(
+        """
+        <div class="info-box">
+
+            💡 <b>Tip:</b>
+
+            Go to Crop Prediction, Yield Prediction
+            and Cost Prediction to generate new results.
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+# ============================================================
+# PREDICTION HISTORY
+# ============================================================
+
+elif page == history_label:
 
     st.title(
-        "🕘 Prediction History"
-        if language == "English"
-        else
-        "🕘 भविष्यवाणी इतिहास"
+        "🕘 Prediction History / भविष्यवाणी इतिहास"
     )
+
 
     if not st.session_state.history:
 
         st.info(
             "No prediction history yet."
-            if language == "English"
-            else
-            "अभी कोई prediction history नहीं है।"
         )
 
     else:
 
-        df = pd.DataFrame(
-            st.session_state.history
+        st.write(
+            f"Total predictions: "
+            f"{len(st.session_state.history)}"
         )
 
-        st.dataframe(
-            df,
-            use_container_width=True,
-            hide_index=True
-        )
+
+        for index, item in enumerate(
+            reversed(
+                st.session_state.history
+            ),
+            start=1
+        ):
+
+            st.markdown(
+                f"""
+                <div class="feature-card">
+
+                    <h3>
+                        {index}. {item["type"]}
+                    </h3>
+
+                    <p>
+                        <b>Result:</b>
+                        {item["result"]}
+                    </p>
+
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
 
         if st.button(
-            "🗑️ Clear History"
-            if language == "English"
-            else
-            "🗑️ इतिहास साफ करें"
+            "🗑️ Clear Prediction History"
         ):
 
             st.session_state.history = []
 
+            st.success(
+                "Prediction history cleared."
+            )
+
             st.rerun()
 
 
-# =========================================================
+# ============================================================
 # ABOUT
-# =========================================================
+# ============================================================
 
-elif page == ABOUT:
+elif page == about_label:
 
     st.title(
-        "🌿 About AgriSense AI"
-        if language == "English"
-        else
-        "🌿 AgriSense AI के बारे में"
+        "🌍 About AgriSense AI"
     )
 
-    st.image(
-        "https://images.unsplash.com/"
-        "photo-1495107334309-fcf20504a5ab"
-        "?auto=format&fit=crop&w=1600&q=85",
-        use_container_width=True
-    )
 
-    if language == "English":
-
-        st.markdown(
-            """
-            <div class="info-card">
+    st.markdown(
+        """
+        <div class="about-box">
 
             <h2>🌱 AgriSense AI</h2>
 
             <p>
-            AgriSense AI is an intelligent agriculture
-            decision-support platform that combines
-            Weather Information and Machine Learning.
+                AgriSense AI is an AI-powered agriculture
+                decision support system designed to bring
+                modern Artificial Intelligence and Machine
+                Learning into agriculture.
             </p>
 
-            <h3>🌾 Main Features</h3>
-
-            <ul>
-                <li>Automatic Village Weather</li>
-                <li>Manual Weather Input</li>
-                <li>AI Crop Recommendation</li>
-                <li>Yield Prediction</li>
-                <li>Cost Prediction</li>
-                <li>Farm Dashboard</li>
-                <li>Prediction History</li>
-            </ul>
-
-            <h3>🔗 FastAPI Endpoints</h3>
+            <h3>🌦️ Weather Information</h3>
 
             <p>
-            <b>POST /predict1</b>
-            → Crop Prediction
+                Farmers can obtain current weather
+                information by entering their village
+                or city. Manual weather input is also
+                available.
             </p>
+
+            <h3>🌱 Crop Prediction</h3>
 
             <p>
-            <b>POST /predict2</b>
-            → Yield Prediction
+                The system uses soil nutrients and
+                weather conditions to provide an
+                AI-based crop recommendation.
             </p>
+
+            <h3>🌾 Yield Prediction</h3>
 
             <p>
-            <b>POST /predict3</b>
-            → Yield + Cost Prediction
+                Users can enter crop, state, season
+                and area to estimate agricultural yield.
             </p>
 
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    else:
-
-        st.markdown(
-            """
-            <div class="info-card">
-
-            <h2>🌱 AgriSense AI</h2>
+            <h3>💰 Cost Prediction</h3>
 
             <p>
-            AgriSense AI एक intelligent agriculture
-            decision-support platform है जो Weather
-            Information और Machine Learning को एक साथ
-            उपयोग करता है।
+                Users can estimate agricultural cost
+                using crop, state and predicted yield.
             </p>
 
-            <h3>🌾 मुख्य सुविधाएँ</h3>
-
-            <ul>
-                <li>Automatic Village Weather</li>
-                <li>Manual Weather Input</li>
-                <li>AI आधारित फसल सिफारिश</li>
-                <li>उत्पादन भविष्यवाणी</li>
-                <li>लागत भविष्यवाणी</li>
-                <li>कृषि डैशबोर्ड</li>
-                <li>भविष्यवाणी इतिहास</li>
-            </ul>
-
-            <h3>🔗 FastAPI Endpoints</h3>
+            <h3>📊 Farm Dashboard</h3>
 
             <p>
-            <b>POST /predict1</b>
-            → Crop Prediction
+                The dashboard brings important
+                weather and prediction results together
+                in one place.
             </p>
+
+            <h3>🤖 Technology</h3>
 
             <p>
-            <b>POST /predict2</b>
-            → Yield Prediction
+                Frontend: Streamlit
+                <br>
+                Backend: FastAPI
+                <br>
+                Machine Learning: Python ML Models
+                <br>
+                Weather: OpenWeather API
             </p>
 
-            <p>
-            <b>POST /predict3</b>
-            → Yield + Cost Prediction
-            </p>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
-# =========================================================
+# ============================================================
 # FOOTER
-# =========================================================
+# ============================================================
 
 st.markdown(
     """
     <div class="footer">
 
-        <p>
+        <div style="font-size:24px;">
             🌱 <b>AgriSense AI</b>
-        </p>
+        </div>
 
-        <p>
-            Smart Farming • AI • Machine Learning
-            • Better Agriculture
-        </p>
+        <br>
+
+        Smart Farming • Artificial Intelligence
+        • Machine Learning
+
+        <br><br>
+
+        <span style="color:#b8eacb;">
+            AI + Agriculture for Better Farming Decisions
+        </span>
 
     </div>
     """,
