@@ -3,20 +3,21 @@ import requests
 import streamlit as st
 
 # =========================================================
-# CONFIG
+# PAGE CONFIG
 # =========================================================
-
-API_URL = "https://agrisense-api.onrender.com"
-
-# Render Environment Variable:
-# OPENWEATHER_API_KEY
-WEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 st.set_page_config(
     page_title="AgriSense AI",
     page_icon="🌾",
     layout="wide"
 )
+
+# =========================================================
+# CONFIG
+# =========================================================
+
+API_URL = "https://agrisense-api.onrender.com"
+WEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 # =========================================================
 # LANGUAGE
@@ -29,82 +30,124 @@ language = st.selectbox(
 
 if language == "English":
 
-    TEXT = {
+    T = {
         "title": "🌾 AgriSense AI",
         "subtitle": "AI-powered agriculture decision support system",
+
         "weather": "🌦️ Weather Information",
         "city": "City / District",
+        "city_placeholder": "Enter city or district",
         "get_weather": "Get Weather",
+
         "temperature": "Temperature",
         "humidity": "Humidity",
         "rainfall": "Rainfall",
+
         "soil": "🧪 Soil Information",
         "nitrogen": "Nitrogen (N)",
         "phosphorus": "Phosphorus (P)",
         "potassium": "Potassium (K)",
         "ph": "Soil pH",
+
         "crop": "🌱 Crop Recommendation",
         "predict_crop": "Predict Crop",
+
         "yield": "🌾 Yield Prediction",
         "predict_yield": "Predict Yield",
+
         "cost": "💰 Cost Prediction",
         "predict_cost": "Predict Cost",
+
         "dashboard": "📊 Profit / Market Dashboard",
         "market_price": "Market Price (₹ per unit)",
         "calculate": "Calculate Profit",
+
         "revenue": "Estimated Revenue",
         "profit": "Estimated Profit",
         "expected_yield": "Expected Yield",
         "estimated_cost": "Estimated Cost",
-        "success_weather": "Weather data fetched successfully!",
-        "success_crop": "Crop prediction successful!",
-        "success_yield": "Yield prediction successful!",
-        "success_cost": "Cost prediction successful!",
+
+        "weather_success": "Weather data fetched successfully!",
+        "weather_error": "Weather data could not be fetched.",
+        "weather_key_error": "Weather API key is not configured.",
+        "city_error": "Please enter a city or district.",
+        "connection_error": "Could not connect to the weather service.",
+
+        "crop_success": "Crop prediction successful!",
+        "crop_error": "Crop prediction failed.",
+        "yield_success": "Yield prediction successful!",
+        "yield_error": "Yield prediction failed.",
+        "cost_success": "Cost prediction successful!",
+        "cost_error": "Cost prediction failed.",
+
         "weather_first": "Please get weather data first.",
-        "api_error": "Weather data could not be fetched.",
-        "invalid_city": "Please enter a city or district.",
-        "invalid_key": "Weather API key is not configured.",
-        "connection_error": "Could not connect to the weather API."
+        "predict_yield_first": "Please predict yield first.",
+        "predict_cost_first": "Please predict cost first.",
+        "price_error": "Please enter a valid market price.",
+
+        "crop_result": "Recommended Crop",
+        "server_error": "Could not connect to prediction server."
     }
 
 else:
 
-    TEXT = {
+    T = {
         "title": "🌾 एग्रीसेंस AI",
         "subtitle": "कृषि के लिए AI आधारित निर्णय प्रणाली",
+
         "weather": "🌦️ मौसम की जानकारी",
         "city": "शहर / जिला",
+        "city_placeholder": "शहर या जिले का नाम दर्ज करें",
         "get_weather": "मौसम प्राप्त करें",
+
         "temperature": "तापमान",
         "humidity": "नमी",
         "rainfall": "वर्षा",
+
         "soil": "🧪 मिट्टी की जानकारी",
         "nitrogen": "नाइट्रोजन (N)",
         "phosphorus": "फॉस्फोरस (P)",
         "potassium": "पोटैशियम (K)",
         "ph": "मिट्टी का pH",
+
         "crop": "🌱 फसल की सिफारिश",
         "predict_crop": "फसल की भविष्यवाणी करें",
+
         "yield": "🌾 उत्पादन की भविष्यवाणी",
         "predict_yield": "उत्पादन की भविष्यवाणी करें",
+
         "cost": "💰 लागत की भविष्यवाणी",
         "predict_cost": "लागत की भविष्यवाणी करें",
+
         "dashboard": "📊 लाभ / बाजार डैशबोर्ड",
         "market_price": "बाजार मूल्य (₹ प्रति यूनिट)",
         "calculate": "लाभ की गणना करें",
+
         "revenue": "अनुमानित आय",
         "profit": "अनुमानित लाभ",
         "expected_yield": "अनुमानित उत्पादन",
         "estimated_cost": "अनुमानित लागत",
-        "success_weather": "मौसम की जानकारी सफलतापूर्वक प्राप्त हुई!",
-        "success_crop": "फसल की भविष्यवाणी सफल रही!",
-        "success_yield": "उत्पादन की भविष्यवाणी सफल रही!",
-        "success_cost": "लागत की भविष्यवाणी सफल रही!",
+
+        "weather_success": "मौसम की जानकारी सफलतापूर्वक प्राप्त हुई!",
+        "weather_error": "मौसम की जानकारी प्राप्त नहीं हो सकी।",
+        "weather_key_error": "Weather API key सेट नहीं है।",
+        "city_error": "कृपया शहर या जिले का नाम दर्ज करें।",
+        "connection_error": "Weather service से कनेक्शन नहीं हो सका।",
+
+        "crop_success": "फसल की भविष्यवाणी सफल रही!",
+        "crop_error": "फसल की भविष्यवाणी असफल रही।",
+        "yield_success": "उत्पादन की भविष्यवाणी सफल रही!",
+        "yield_error": "उत्पादन की भविष्यवाणी असफल रही।",
+        "cost_success": "लागत की भविष्यवाणी सफल रही!",
+        "cost_error": "लागत की भविष्यवाणी असफल रही।",
+
         "weather_first": "कृपया पहले मौसम की जानकारी प्राप्त करें।",
-        "api_error": "मौसम की जानकारी प्राप्त नहीं हो सकी।",
-        "invalid_city": "कृपया शहर या जिले का नाम दर्ज करें।",
-        "invalid_key": "Weather API key सेट नहीं है।",
-        "connection_error": "Weather API से कनेक्शन नहीं हो सका।"
+        "predict_yield_first": "कृपया पहले उत्पादन की भविष्यवाणी करें।",
+        "predict_cost_first": "कृपया पहले लागत की भविष्यवाणी करें।",
+        "price_error": "कृपया सही बाजार मूल्य दर्ज करें।",
+
+        "crop_result": "सुझाई गई फसल",
+        "server_error": "Prediction server से कनेक्शन नहीं हो सका।"
     }
 
 
@@ -112,64 +155,72 @@ else:
 # HEADER
 # =========================================================
 
-st.title(TEXT["title"])
-st.caption(TEXT["subtitle"])
+st.title(T["title"])
+st.caption(T["subtitle"])
 
 st.divider()
 
 
 # =========================================================
-# WEATHER
+# WEATHER SECTION
 # =========================================================
 
-st.header(TEXT["weather"])
+st.header(T["weather"])
 
 city = st.text_input(
-    TEXT["city"],
-    placeholder="Lucknow"
+    T["city"],
+    placeholder=T["city_placeholder"]
 )
 
 if st.button(
-    TEXT["get_weather"],
+    T["get_weather"],
     use_container_width=True
 ):
 
-    if not city:
-        st.warning(TEXT["invalid_city"])
+    if not city.strip():
+
+        st.warning(T["city_error"])
 
     elif not WEATHER_API_KEY:
-        st.error(TEXT["invalid_key"])
+
+        st.error(T["weather_key_error"])
 
     else:
 
-        url = (
+        weather_url = (
             "https://api.openweathermap.org/data/2.5/weather"
         )
 
-        params = {
-            "q": city,
+        weather_params = {
+            "q": city.strip(),
             "appid": WEATHER_API_KEY,
             "units": "metric"
         }
 
         try:
 
-            with st.spinner("Fetching weather..."):
+            with st.spinner(
+                "Fetching weather..."
+                if language == "English"
+                else
+                "मौसम की जानकारी प्राप्त की जा रही है..."
+            ):
 
-                response = requests.get(
-                    url,
-                    params=params,
+                weather_response = requests.get(
+                    weather_url,
+                    params=weather_params,
                     timeout=20
                 )
 
-            if response.status_code == 200:
+            if weather_response.status_code == 200:
 
-                weather = response.json()
+                weather_data = weather_response.json()
 
-                temperature = weather["main"]["temp"]
-                humidity = weather["main"]["humidity"]
+                temperature = weather_data["main"]["temp"]
+                humidity = weather_data["main"]["humidity"]
 
-                rainfall = weather.get(
+                # OpenWeather rain data may not always exist
+                rainfall = weather_data.get(
                     "rain",
                     {}
                 ).get(
@@ -189,22 +240,38 @@ if st.button(
                     rainfall
                 )
 
-                st.session_state["weather_city"] = city
+                st.session_state["weather_city"] = city.strip()
 
-                st.success(TEXT["success_weather"])
+                st.success(T["weather_success"])
 
             else:
 
-                # User ko technical/raw API response nahi dikhayenge
-                st.error(
-                    TEXT["api_error"]
-                )
+                # Clean user-facing error
+                if weather_response.status_code == 401:
+                    st.error(
+                        "Invalid Weather API key."
+                        if language == "English"
+                        else
+                        "Weather API key सही नहीं है।"
+                    )
+
+                elif weather_response.status_code == 404:
+                    st.error(
+                        "City not found."
+                        if language == "English"
+                        else
+                        "शहर नहीं मिला।"
+                    )
+
+                else:
+                    st.error(
+                        f"{T['weather_error']} "
+                        f"({weather_response.status_code})"
+                    )
 
         except requests.RequestException:
 
-            st.error(
-                TEXT["connection_error"]
-            )
+            st.error(T["connection_error"])
 
 
 # =========================================================
@@ -224,51 +291,51 @@ if "temperature" in st.session_state:
 
     with col1:
         st.metric(
-            f"🌡️ {TEXT['temperature']}",
+            f"🌡️ {T['temperature']}",
             f"{st.session_state['temperature']:.1f} °C"
         )
 
     with col2:
         st.metric(
-            f"💧 {TEXT['humidity']}",
+            f"💧 {T['humidity']}",
             f"{st.session_state['humidity']:.1f} %"
         )
 
     with col3:
         st.metric(
-            f"🌧️ {TEXT['rainfall']}",
+            f"🌧️ {T['rainfall']}",
             f"{st.session_state['rainfall']:.2f} mm"
         )
 
 
 # =========================================================
-# SOIL INPUT
+# SOIL INFORMATION
 # =========================================================
 
 st.divider()
 
-st.header(TEXT["soil"])
+st.header(T["soil"])
 
 col1, col2 = st.columns(2)
 
 with col1:
 
-    N = st.number_input(
-        TEXT["nitrogen"],
+    nitrogen = st.number_input(
+        T["nitrogen"],
         min_value=0.0,
         value=50.0,
         step=1.0
     )
 
-    P = st.number_input(
-        TEXT["phosphorus"],
+    phosphorus = st.number_input(
+        T["phosphorus"],
         min_value=0.0,
         value=50.0,
         step=1.0
     )
 
-    K = st.number_input(
-        TEXT["potassium"],
+    potassium = st.number_input(
+        T["potassium"],
         min_value=0.0,
         value=50.0,
         step=1.0
@@ -276,8 +343,8 @@ with col1:
 
 with col2:
 
-    ph = st.number_input(
-        TEXT["ph"],
+    soil_ph = st.number_input(
+        T["ph"],
         min_value=0.0,
         max_value=14.0,
         value=6.5,
@@ -286,7 +353,7 @@ with col2:
 
 
 # =========================================================
-# COMMON PAYLOAD
+# CREATE MODEL PAYLOAD
 # =========================================================
 
 def create_payload():
@@ -295,12 +362,12 @@ def create_payload():
         return None
 
     return {
-        "N": N,
-        "P": P,
-        "K": K,
+        "N": nitrogen,
+        "P": phosphorus,
+        "K": potassium,
         "temperature": st.session_state["temperature"],
         "humidity": st.session_state["humidity"],
-        "ph": ph,
+        "ph": soil_ph,
         "rainfall": st.session_state["rainfall"]
     }
 
@@ -311,10 +378,10 @@ def create_payload():
 
 st.divider()
 
-st.header(TEXT["crop"])
+st.header(T["crop"])
 
 if st.button(
-    TEXT["predict_crop"],
+    T["predict_crop"],
     use_container_width=True
 ):
 
@@ -322,13 +389,18 @@ if st.button(
 
     if payload is None:
 
-        st.warning(TEXT["weather_first"])
+        st.warning(T["weather_first"])
 
     else:
 
         try:
 
-            with st.spinner("Predicting..."):
+            with st.spinner(
+                "Predicting crop..."
+                if language == "English"
+                else
+                "फसल की भविष्यवाणी की जा रही है..."
+            ):
 
                 response = requests.post(
                     f"{API_URL}/predict1",
@@ -347,54 +419,25 @@ if st.button(
                     or result.get("prediction")
                 )
 
-                if crop:
+                if crop is not None:
 
                     crop_name = str(crop)
 
-                    # API ke message ko clean karna
-                    crop_name = crop_name.replace(
-                        "Recommended crop is",
-                        ""
-                    )
-
-                    crop_name = crop_name.replace(
-                        "successfully",
-                        ""
-                    )
-
-                    crop_name = crop_name.replace(
-                        "[",
-                        ""
-                    )
-
-                    crop_name = crop_name.replace(
-                        "]",
-                        ""
-                    )
-
-                    crop_name = crop_name.replace(
-                        "'",
-                        ""
-                    )
-
-                    crop_name = crop_name.strip()
-
                     st.session_state["crop"] = crop_name
 
-                    st.success(
-                        TEXT["success_crop"]
-                    )
+                    st.success(T["crop_success"])
 
                     st.markdown(
                         f"""
                         <div style="
                             padding: 25px;
                             border-radius: 15px;
-                            text-align: center;
                             border: 1px solid
                             rgba(128,128,128,0.3);
+                            text-align: center;
                         ">
-                            <h1>🌱 {crop_name.title()}</h1>
+                            <h2>🌱 {T["crop_result"]}</h2>
+                            <h1>{crop_name.title()}</h1>
                         </div>
                         """,
                         unsafe_allow_html=True
@@ -402,30 +445,18 @@ if st.button(
 
                 else:
 
-                    st.error(
-                        "Crop prediction result was not received."
-                        if language == "English"
-                        else
-                        "फसल की भविष्यवाणी का परिणाम प्राप्त नहीं हुआ।"
-                    )
+                    st.error(T["crop_error"])
 
             else:
 
                 st.error(
-                    "Crop prediction failed."
-                    if language == "English"
-                    else
-                    "फसल की भविष्यवाणी असफल रही।"
+                    f"{T['crop_error']} "
+                    f"({response.status_code})"
                 )
 
         except requests.RequestException:
 
-            st.error(
-                "Could not connect to prediction server."
-                if language == "English"
-                else
-                "Prediction server से कनेक्शन नहीं हो सका।"
-            )
+            st.error(T["server_error"])
 
 
 # =========================================================
@@ -434,10 +465,10 @@ if st.button(
 
 st.divider()
 
-st.header(TEXT["yield"])
+st.header(T["yield"])
 
 if st.button(
-    TEXT["predict_yield"],
+    T["predict_yield"],
     use_container_width=True
 ):
 
@@ -445,13 +476,18 @@ if st.button(
 
     if payload is None:
 
-        st.warning(TEXT["weather_first"])
+        st.warning(T["weather_first"])
 
     else:
 
         try:
 
-            with st.spinner("Predicting..."):
+            with st.spinner(
+                "Predicting yield..."
+                if language == "English"
+                else
+                "उत्पादन की भविष्यवाणी की जा रही है..."
+            ):
 
                 response = requests.post(
                     f"{API_URL}/predict2",
@@ -471,47 +507,31 @@ if st.button(
 
                 if yield_value is not None:
 
-                    yield_value = float(
-                        yield_value
-                    )
+                    yield_value = float(yield_value)
 
                     st.session_state["yield"] = yield_value
 
-                    st.success(
-                        TEXT["success_yield"]
-                    )
+                    st.success(T["yield_success"])
 
                     st.metric(
-                        f"🌾 {TEXT['expected_yield']}",
+                        f"🌾 {T['expected_yield']}",
                         f"{yield_value:,.2f}"
                     )
 
                 else:
 
-                    st.error(
-                        "Yield prediction result was not received."
-                        if language == "English"
-                        else
-                        "उत्पादन की भविष्यवाणी का परिणाम प्राप्त नहीं हुआ।"
-                    )
+                    st.error(T["yield_error"])
 
             else:
 
                 st.error(
-                    "Yield prediction failed."
-                    if language == "English"
-                    else
-                    "उत्पादन की भविष्यवाणी असफल रही।"
+                    f"{T['yield_error']} "
+                    f"({response.status_code})"
                 )
 
         except requests.RequestException:
 
-            st.error(
-                "Could not connect to prediction server."
-                if language == "English"
-                else
-                "Prediction server से कनेक्शन नहीं हो सका।"
-            )
+            st.error(T["server_error"])
 
 
 # =========================================================
@@ -520,10 +540,10 @@ if st.button(
 
 st.divider()
 
-st.header(TEXT["cost"])
+st.header(T["cost"])
 
 if st.button(
-    TEXT["predict_cost"],
+    T["predict_cost"],
     use_container_width=True
 ):
 
@@ -531,13 +551,18 @@ if st.button(
 
     if payload is None:
 
-        st.warning(TEXT["weather_first"])
+        st.warning(T["weather_first"])
 
     else:
 
         try:
 
-            with st.spinner("Predicting..."):
+            with st.spinner(
+                "Predicting cost..."
+                if language == "English"
+                else
+                "लागत की भविष्यवाणी की जा रही है..."
+            ):
 
                 response = requests.post(
                     f"{API_URL}/predict3",
@@ -557,66 +582,50 @@ if st.button(
 
                 if cost_value is not None:
 
-                    cost_value = float(
-                        cost_value
-                    )
+                    cost_value = float(cost_value)
 
                     st.session_state["cost"] = cost_value
 
-                    st.success(
-                        TEXT["success_cost"]
-                    )
+                    st.success(T["cost_success"])
 
                     st.metric(
-                        f"💰 {TEXT['estimated_cost']}",
+                        f"💰 {T['estimated_cost']}",
                         f"₹{cost_value:,.2f}"
                     )
 
                 else:
 
-                    st.error(
-                        "Cost prediction result was not received."
-                        if language == "English"
-                        else
-                        "लागत की भविष्यवाणी का परिणाम प्राप्त नहीं हुआ।"
-                    )
+                    st.error(T["cost_error"])
 
             else:
 
                 st.error(
-                    "Cost prediction failed."
-                    if language == "English"
-                    else
-                    "लागत की भविष्यवाणी असफल रही।"
+                    f"{T['cost_error']} "
+                    f"({response.status_code})"
                 )
 
         except requests.RequestException:
 
-            st.error(
-                "Could not connect to prediction server."
-                if language == "English"
-                else
-                "Prediction server से कनेक्शन नहीं हो सका।"
-            )
+            st.error(T["server_error"])
 
 
 # =========================================================
-# PROFIT DASHBOARD
+# PROFIT / MARKET DASHBOARD
 # =========================================================
 
 st.divider()
 
-st.header(TEXT["dashboard"])
+st.header(T["dashboard"])
 
 market_price = st.number_input(
-    TEXT["market_price"],
+    T["market_price"],
     min_value=0.0,
     value=0.0,
     step=100.0
 )
 
 if st.button(
-    TEXT["calculate"],
+    T["calculate"],
     use_container_width=True
 ):
 
@@ -626,71 +635,51 @@ if st.button(
 
     if yield_value is None:
 
-        st.warning(
-            "Please predict yield first."
-            if language == "English"
-            else
-            "कृपया पहले उत्पादन की भविष्यवाणी करें।"
-        )
+        st.warning(T["predict_yield_first"])
 
     elif cost_value is None:
 
-        st.warning(
-            "Please predict cost first."
-            if language == "English"
-            else
-            "कृपया पहले लागत की भविष्यवाणी करें।"
-        )
+        st.warning(T["predict_cost_first"])
 
     elif market_price <= 0:
 
-        st.warning(
-            "Please enter a valid market price."
-            if language == "English"
-            else
-            "कृपया सही बाजार मूल्य दर्ज करें।"
-        )
+        st.warning(T["price_error"])
 
     else:
 
         revenue = yield_value * market_price
         profit = revenue - cost_value
 
-        st.subheader(
-            "Farm Summary"
-            if language == "English"
-            else
-            "कृषि सारांश"
-        )
-
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
 
             st.metric(
-                "🌱 Crop" if language == "English"
-                else "🌱 फसल",
+                "🌱 Crop"
+                if language == "English"
+                else
+                "🌱 फसल",
                 crop_name or "N/A"
             )
 
         with col2:
 
             st.metric(
-                f"🌾 {TEXT['expected_yield']}",
+                f"🌾 {T['expected_yield']}",
                 f"{yield_value:,.2f}"
             )
 
         with col3:
 
             st.metric(
-                f"💵 {TEXT['revenue']}",
+                f"💵 {T['revenue']}",
                 f"₹{revenue:,.2f}"
             )
 
         with col4:
 
             st.metric(
-                f"📈 {TEXT['profit']}",
+                f"📈 {T['profit']}",
                 f"₹{profit:,.2f}"
             )
 
