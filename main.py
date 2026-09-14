@@ -1,12 +1,7 @@
+import os
+import joblib
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import joblib
-import os
-
-
-# =========================================================
-# FASTAPI APP
-# =========================================================
 
 app = FastAPI(
     title="AgriSense AI Prediction API",
@@ -14,64 +9,59 @@ app = FastAPI(
     version="1.0.0"
 )
 
-
-# =========================================================
-# MODEL FILE PATHS
-# =========================================================
-
+# ==========================================
+# FILE PATH CONFIGURATION
+# ==========================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-CROP_MODEL_PATH = os.path.join(BASE_DIR, "crop_model.pkl")
-YIELD_MODEL_PATH = os.path.join(BASE_DIR, "yield_model.pkl")
-COST_MODEL_PATH = os.path.join(BASE_DIR, "cost_model.pkl")
+# Crop Recommendation Model & Encoder Paths
+CROP_MODEL_PATH = os.path.join(BASE_DIR, "01_crop_model.joblib")
+CROP_ENCODER_PATH = os.path.join(BASE_DIR, "01_crop_encoder.joblib")
 
+# Yield Prediction Model & Encoder Paths
+YIELD_MODEL_PATH = os.path.join(BASE_DIR, "02_yield_model.joblib")
+YIELD_LE_CROP_PATH = os.path.join(BASE_DIR, "02_le_crop.joblib")
+YIELD_LE_STATE_PATH = os.path.join(BASE_DIR, "02_le_state.joblib")
+YIELD_LE_SEASON_PATH = os.path.join(BASE_DIR, "02_le_season.joblib")
 
-# =========================================================
-# LOAD MODELS
-# =========================================================
+# Cost Prediction Model & Encoder Paths
+COST_MODEL_PATH = os.path.join(BASE_DIR, "03_yield_cost_model.joblib")
+COST_LE_CROP_PATH = os.path.join(BASE_DIR, "03_le_crop.joblib")
+COST_LE_STATE_PATH = os.path.join(BASE_DIR, "03_le_state.joblib")
 
-crop_model = None
-yield_model = None
-cost_model = None
-
-
-def load_model(path):
+# ==========================================
+# ARTIFACT LOADER
+# ==========================================
+def load_artifact(path: str):
     if not os.path.exists(path):
-        print(f"Model file not found: {path}")
+        print(f"Warning: File not found at {path}")
         return None
-
     try:
-        model = joblib.load(path)
-        print(f"Loaded model: {path}")
-        return model
-
+        artifact = joblib.load(path)
+        print(f"Successfully loaded: {path}")
+        return artifact
     except Exception as e:
         print(f"Error loading {path}: {e}")
         return None
 
+# Load Models
+crop_model = load_artifact(CROP_MODEL_PATH)
+yield_model = load_artifact(YIELD_MODEL_PATH)
+cost_model = load_artifact(COST_MODEL_PATH)
 
-crop_model = load_model(CROP_MODEL_PATH)
-yield_model = load_model(YIELD_MODEL_PATH)
-cost_model = load_model(COST_MODEL_PATH)
+# Load Encoders
+crop_encoder = load_artifact(CROP_ENCODER_PATH)
 
+yield_le_crop = load_artifact(YIELD_LE_CROP_PATH)
+yield_le_state = load_artifact(YIELD_LE_STATE_PATH)
+yield_le_season = load_artifact(YIELD_LE_SEASON_PATH)
 
-# =========================================================
-# ROOT
-# =========================================================
+cost_le_crop = load_artifact(COST_LE_CROP_PATH)
+cost_le_state = load_artifact(COST_LE_STATE_PATH)
 
-@app.get("/")
-def home():
-    return {
-        "message": "AgriSense AI prediction api",
-        "Status": "running",
-        "endpoint": "Send POST request to /predict1, /predict2 or /predict3"
-    }
-
-
-# =========================================================
-# CROP SUGGESTION INPUT
-# =========================================================
-
+# ==========================================
+# INPUT SCHEMAS
+# ==========================================
 class CropInput(BaseModel):
     N: float
     P: float
@@ -81,43 +71,33 @@ class CropInput(BaseModel):
     ph: float
     rainfall: float
 
-
-# =========================================================
-# PRODUCTION / YIELD INPUT
-# =========================================================
-
 class YieldInput(BaseModel):
     Crop: str
     State: str
     Season: str
     Area: float
 
-
-# =========================================================
-# COST INPUT
-# =========================================================
-
 class CostInput(BaseModel):
     Crop: str
     State: str
     Yield: float
 
-
-# =========================================================
-# PREDICT 1 - CROP SUGGESTION
-# =========================================================
+# ==========================================
+# API ENDPOINTS
+# ==========================================
+@app.get("/")
+def home():
+    return {
+        "message": "AgriSense AI prediction api",
+        "status": "running",
+        "endpoint": "Send POST request to /predict1, /predict2 or /predict3"
+    }
 
 @app.post("/predict1")
 def predict_crop(data: CropInput):
-
-    if crop_model is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Crop model file is not loaded."
-        )
-
+    if crop_model is None or crop_encoder is None:
+        raise HTTPException(status_code=500, detail="Crop recommendation model or encoder is not loaded.")
     try:
-
         features = [[
             data.N,
             data.P,
@@ -127,108 +107,44 @@ def predict_crop(data: CropInput):
             data.ph,
             data.rainfall
         ]]
-
-        prediction = crop_model.predict(features)
-
-        crop = prediction[0]
-
-        return {
-            "predict_crop": f"Recommended crop is {crop}"
-        }
-
+        encoded_pred = crop_model.predict(features)[0]
+        crop_name = crop_encoder.inverse_transform([encoded_pred])[0]
+        
+        return {"predict_crop": f"Recommended crop is {crop_name}"}
     except Exception as e:
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Crop suggestion error: {str(e)}"
-        )
-
-
-# =========================================================
-# PREDICT 2 - PRODUCTION ESTIMATION
-# =========================================================
+        raise HTTPException(status_code=500, detail=f"Crop suggestion error: {str(e)}")
 
 @app.post("/predict2")
 def predict_yield(data: YieldInput):
-
-    if yield_model is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Yield model file is not loaded."
-        )
-
+    if yield_model is None or not all([yield_le_crop, yield_le_state, yield_le_season]):
+        raise HTTPException(status_code=500, detail="Yield prediction model or required encoders are not loaded.")
     try:
-
-        features = [[
-            data.Crop,
-            data.State,
-            data.Season,
-            data.Area
-        ]]
-
-        prediction = yield_model.predict(features)
-
-        result = float(prediction[0])
-
-        return {
-            "predict_yield": f"Predicted yield is {result} successfully"
-        }
-
+        encoded_crop = yield_le_crop.transform([data.Crop])[0]
+        encoded_state = yield_le_state.transform([data.State])[0]
+        encoded_season = yield_le_season.transform([data.Season])[0]
+        
+        features = [[encoded_crop, encoded_state, encoded_season, data.Area]]
+        predicted_yield = yield_model.predict(features)[0]
+        
+        return {"predicted_yield": float(predicted_yield)}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Encoding error: Invalid string input provided ({str(e)})")
     except Exception as e:
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Production estimation error: {str(e)}"
-        )
-
-
-# =========================================================
-# PREDICT 3 - COST ESTIMATION
-# =========================================================
+        raise HTTPException(status_code=500, detail=f"Yield prediction error: {str(e)}")
 
 @app.post("/predict3")
 def predict_cost(data: CostInput):
-
-    if cost_model is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Cost model file is not loaded."
-        )
-
+    if cost_model is None or not all([cost_le_crop, cost_le_state]):
+        raise HTTPException(status_code=500, detail="Cost prediction model or required encoders are not loaded.")
     try:
-
-        features = [[
-            data.Crop,
-            data.State,
-            data.Yield
-        ]]
-
-        prediction = cost_model.predict(features)
-
-        result = float(prediction[0])
-
-        return {
-            "predict_cost": f"Estimated cultivation cost is {result} successfully"
-        }
-
+        encoded_crop = cost_le_crop.transform([data.Crop])[0]
+        encoded_state = cost_le_state.transform([data.State])[0]
+        
+        features = [[encoded_crop, encoded_state, data.Yield]]
+        predicted_cost = cost_model.predict(features)[0]
+        
+        return {"predicted_cost_A2FL": float(predicted_cost)}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Encoding error: Invalid string input provided ({str(e)})")
     except Exception as e:
-
-        raise HTTPException(
-            status_code=500,
-            detail=f"Cost estimation error: {str(e)}"
-        )
-
-
-# =========================================================
-# HEALTH CHECK
-# =========================================================
-
-@app.get("/health")
-def health():
-
-    return {
-        "status": "ok",
-        "crop_model_loaded": crop_model is not None,
-        "yield_model_loaded": yield_model is not None,
-        "cost_model_loaded": cost_model is not None
-    }
+        raise HTTPException(status_code=500, detail=f"Cost prediction error: {str(e)}")
