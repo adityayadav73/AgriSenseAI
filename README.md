@@ -1,82 +1,110 @@
 # 🌾 AgriSense AI
 
-AgriSense AI is an agriculture prediction system that uses Machine Learning to provide crop recommendation, crop yield prediction, and agriculture yield & cost prediction.
+AgriSense AI is a Machine Learning based agriculture decision-support system designed to help farmers and users make better farming decisions.
+
+The application provides:
+
+- 🌱 Crop Suggestion
+- 📊 Yield Estimation
+- 💰 Cost Estimation
+- 📈 Profit Estimation
+- 🌦️ Weather-based inputs
+
+The system uses a **Streamlit frontend**, **FastAPI backend**, and trained **Machine Learning models**.
+
+---
 
 ## 🚀 Features
 
-- 🌱 Crop Recommendation   
-- 🌾 Crop Yield Prediction
-- 💰 Yield & Cost Prediction
-- 🖥️ Streamlit Frontend
-- ⚡ FastAPI Backend
-- 🤖 Machine Learning Models
-- ☁️ Render Deployment
+### 🌱 Crop Suggestion
+Recommends a suitable crop based on:
+
+- Nitrogen (N)
+- Phosphorus (P)
+- Potassium (K)
+- Temperature
+- Humidity
+- pH
+- Rainfall
+
+Weather information can be provided through:
+
+- 🌦️ Automatic Weather
+- ✏️ Manual Weather Input
+
+---
+
+### 📊 Yield Estimation
+
+Estimates agricultural production based on:
+
+- Crop
+- State
+- Season
+- Area
+
+The available Crop, State, and Season options are automatically loaded from the trained model encoders.
+
+---
+
+### 💰 Cost Estimation
+
+Estimates cultivation cost based on:
+
+- Crop
+- State
+- Yield
+
+The available Crop and State options are automatically loaded from the trained model encoders.
+
+---
+
+### 📈 Profit Estimation
+
+Calculates estimated profit using:
+
+- Estimated Yield
+- Estimated Cost
+- Expected Selling Price
+
+The profit is calculated using the estimated agricultural production and cultivation cost.
+
+---
+
+## 🌦️ Weather Integration
+
+AgriSense AI supports weather information for crop suggestions.
+
+Users can either:
+
+1. Enter a District and State to fetch weather information automatically.
+2. Enter Temperature, Humidity, and Rainfall manually.
+
+Weather data is used as an input for the Crop Suggestion module.
+
+---
+
 ## 🏗️ Project Architecture
 
-User  
+```text
+User
   │
   ▼
-Streamlit Frontend  
+Streamlit Frontend
   │
   ▼
-FastAPI Backend  
+FastAPI Backend
   │
   ▼
-Machine Learning Models  
+Machine Learning Models
   │
   ▼
-Prediction  
+Crop / Yield / Cost Estimation
   │
   ▼
-Result  
-## Prediction Modules
-### 🌱 Crop Recommendation  
-- The crop recommendation model uses:  
-- Nitrogen (N)  
-- Phosphorus (P)  
-- Potassium (K)  
-- Temperature  
-- Humidity  
-- pH  
-- Rainfall  
-### 🌾 Yield Prediction 
-- The yield prediction module uses agriculture-related features such as:  
-- Crop  
-- State  
-- Season  
-- Area  
-- Other model-specific features  
-### 💰 Yield & Cost Prediction  
-- This module predicts agriculture yield and related cultivation cost using the features required by the trained model.  
-## 🛠️ Technologies Used
-- Python  
-- Pandas  
-- NumPy  
-- Scikit-learn  
-- Joblib  
-- FastAPI  
-- Uvicorn  
-- Streamlit  
-- Render  
-## Repository Structure
-AgriSense-AI/
-│  
-├── mains.py  
-├── streamlit_app.py  
-├── requirements.txt  
-├── README.md  
-│
-├── 01_crop_model.joblib  
-├── 01_crop_features.joblib  
-├── 01_crop_encoder.joblib  
-│
-├── 02_yield_model.joblib  
-├── 02_yield_features.joblib  
-├── 02_le_crop.joblib  
-├── 02_le_state.joblib  
-├── 02_le_season.joblib  
-│
-└── 03_yield_cost_model.joblib  
+Result
+
+You can try the live application here:
 ## 🌐 Live Demo
 You can try the live application here:  
 👉 **[AgriSense AI Web App](https://agrisenseai-gps1.onrender.com/)**
