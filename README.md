@@ -86,23 +86,33 @@ Weather data is used as an input for the Crop Suggestion module.
 
 ## 🏗️ Project Architecture
 
-```text
-User
+User  
   │
   ▼
-Streamlit Frontend
+Streamlit Frontend  
   │
   ▼
-FastAPI Backend
+FastAPI Backend  
   │
   ▼
-Machine Learning Models
+Machine Learning Models  
   │
   ▼
-Crop / Yield / Cost Estimation
+Crop / Yield / Cost Estimation  
   │
   ▼
-Result
+Result  
+## 🖥️ Application Pages
+The Streamlit application contains the following pages:  
+🏠 Home  
+🌱 Crop Suggestion  
+📊 Yield Estimation  
+💰 Cost Estimation  
+📈 Profit Estimation  
+ℹ️ About  
+The application also supports:  
+🇬🇧 English  
+🇮🇳 Hindi  
 
 You can try the live application here:
 ## 🌐 Live Demo
