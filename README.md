@@ -150,6 +150,11 @@ AgriSense-AI/
 
 You can try the live application here:
 ## 🌐 Live Demo
-You can try the live application here:  
+You can try the live application here:
+# Streamlit Frontend
 👉 **[AgriSense AI Web App](https://agrisenseai-gps1.onrender.com/)**
+# FastAPI Backend
+👉 **[AgriSense AI Web App API](https://agrisenseai-n621.onrender.com)**
+
+
 
