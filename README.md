@@ -113,6 +113,40 @@ The Streamlit application contains the following pages:
 The application also supports:  
 🇬🇧 English  
 🇮🇳 Hindi  
+## 🛠️ Technologies Used
+Python  
+Pandas  
+NumPy  
+Scikit-learn  
+Joblib  
+FastAPI  
+Uvicorn  
+Streamlit  
+Requests  
+OpenWeather API  
+Render  
+## 📁 Repository Structure
+AgriSense-AI/  
+│  
+├── main.py  
+├── streamlit_app.py  
+├── requirements.txt  
+├── README.md  
+│  
+├── 01_crop_model.joblib 
+├── 01_crop_features.joblib  
+├── 01_crop_encoder.joblib  
+│  
+├── 02_yield_model.joblib  
+├── 02_yield_features.joblib  
+├── 02_le_crop.joblib  
+├── 02_le_state.joblib  
+├── 02_le_season.joblib  
+│
+├── 03_yield_cost_model.joblib  
+├── 03_yield_cost_features.joblib  
+├── 03_le_crop.joblib  
+└── 03_le_state.joblib  
 
 You can try the live application here:
 ## 🌐 Live Demo
