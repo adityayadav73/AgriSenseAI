@@ -350,3 +350,19 @@ def predict_cost(data: CostInput):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal cost processing error: {str(e)}"
         )
+
+@app.get("/yield-options")
+def yield_options():
+    return {
+        "crops": encoder_yield_crop.classes_.tolist(),
+        "states": encoder_yield_state.classes_.tolist(),
+        "seasons": encoder_yield_season.classes_.tolist()
+    }
+
+
+@app.get("/cost-options")
+def cost_options():
+    return {
+        "crops": encoder_yield_cost_crop.classes_.tolist(),
+        "states": encoder_yield_cost_state.classes_.tolist()
+    }

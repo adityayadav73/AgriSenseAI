@@ -1,4 +1,3 @@
-
 import streamlit as st
 import requests
 import os
@@ -215,7 +214,6 @@ TEXT = {
 
         "district": "District",
         "state": "State",
-
         "city": "City",
 
         "get_weather": "Get Weather",
@@ -246,7 +244,7 @@ TEXT = {
         "ph": "Soil pH",
 
         "soil_hint":
-            "Enter the available soil nutrient values for better crop prediction.",
+            "Enter the available soil nutrient values for better crop suggestion.",
 
         "get_crop": "Get Crop Suggestion",
 
@@ -272,11 +270,11 @@ TEXT = {
         "area": "Area (Hectare)",
 
         "estimate_yield": "Estimate Yield",
-        "yield_result": "Yield Estimate",
+        "yield_result": "Estimated Yield",
         "yield_unit": "Quintal / Hectare",
 
         "estimate_cost": "Estimate Cost",
-        "cost_result": "Cultivation Cost",
+        "cost_result": "Estimated Cultivation Cost",
         "cost_unit": "₹ / Hectare",
 
         "profit_yield": "Yield (Quintal / Hectare)",
@@ -291,8 +289,15 @@ TEXT = {
         "per_hectare": "per hectare",
 
         "english": "English",
-        "hindi": "हिन्दी"
+        "hindi": "हिन्दी",
+
+        "loading_options": "Loading model options...",
+        "options_error": "Unable to load model options.",
+        "select_crop": "Select Crop",
+        "select_state": "Select State",
+        "select_season": "Select Season"
     },
+
 
     "Hindi": {
 
@@ -323,7 +328,6 @@ TEXT = {
 
         "district": "जिला",
         "state": "राज्य",
-
         "city": "शहर",
 
         "get_weather": "मौसम प्राप्त करें",
@@ -380,11 +384,11 @@ TEXT = {
         "area": "क्षेत्रफल (हेक्टेयर)",
 
         "estimate_yield": "उत्पादन अनुमान लगाएं",
-        "yield_result": "उत्पादन अनुमान",
+        "yield_result": "अनुमानित उत्पादन",
         "yield_unit": "क्विंटल / हेक्टेयर",
 
         "estimate_cost": "लागत अनुमान लगाएं",
-        "cost_result": "खेती की लागत",
+        "cost_result": "अनुमानित खेती लागत",
         "cost_unit": "₹ / हेक्टेयर",
 
         "profit_yield": "उत्पादन (क्विंटल / हेक्टेयर)",
@@ -399,7 +403,13 @@ TEXT = {
         "per_hectare": "प्रति हेक्टेयर",
 
         "english": "English",
-        "hindi": "हिन्दी"
+        "hindi": "हिन्दी",
+
+        "loading_options": "मॉडल विकल्प लोड हो रहे हैं...",
+        "options_error": "मॉडल विकल्प लोड नहीं हो सके।",
+        "select_crop": "फसल चुनें",
+        "select_state": "राज्य चुनें",
+        "select_season": "मौसम चुनें"
     }
 }
 
@@ -495,10 +505,26 @@ def call_api(endpoint, payload):
 
             return response.json(), None
 
-        return (
-            None,
-            f"API Error: {response.status_code}"
-        )
+        try:
+
+            error_data = response.json()
+
+            detail = error_data.get(
+                "detail",
+                "Unknown API error"
+            )
+
+            return (
+                None,
+                f"API Error {response.status_code}: {detail}"
+            )
+
+        except Exception:
+
+            return (
+                None,
+                f"API Error {response.status_code}"
+            )
 
     except requests.exceptions.Timeout:
 
@@ -513,6 +539,58 @@ def call_api(endpoint, payload):
             None,
             "FastAPI server is not reachable."
         )
+
+    except Exception as e:
+
+        return None, str(e)
+
+
+# =========================================================
+# OPTIONS HELPER
+# =========================================================
+
+@st.cache_data(ttl=300)
+def get_options(endpoint):
+
+    try:
+
+        response = requests.get(
+            f"{FASTAPI_URL}{endpoint}",
+            timeout=30
+        )
+
+        if response.status_code == 200:
+
+            return response.json(), None
+
+        try:
+
+            data = response.json()
+
+            detail = data.get(
+                "detail",
+                "Unable to load options"
+            )
+
+            return (
+                None,
+                f"API Error {response.status_code}: {detail}"
+            )
+
+        except Exception:
+
+            return (
+                None,
+                f"API Error {response.status_code}"
+            )
+
+    except requests.exceptions.Timeout:
+
+        return None, "Request timed out."
+
+    except requests.exceptions.ConnectionError:
+
+        return None, "FastAPI server is not reachable."
 
     except Exception as e:
 
@@ -644,7 +722,6 @@ def clean_crop_name(value):
 
         "lentil":
             "Lentil"
-
     }
 
     key = crop.lower().strip()
@@ -669,27 +746,21 @@ def get_weather_icon(condition):
     ).lower()
 
     if "clear" in condition:
-
         return "☀️"
 
     if "cloud" in condition:
-
         return "☁️"
 
     if "rain" in condition:
-
         return "🌧️"
 
     if "drizzle" in condition:
-
         return "🌦️"
 
     if "thunder" in condition:
-
         return "⛈️"
 
     if "snow" in condition:
-
         return "❄️"
 
     if (
@@ -697,7 +768,6 @@ def get_weather_icon(condition):
         or "fog" in condition
         or "haze" in condition
     ):
-
         return "🌫️"
 
     return "🌤️"
@@ -946,15 +1016,7 @@ elif st.session_state.page == "Crop Suggestion":
                         )
                     )
 
-                    condition = (
-                        condition
-                        .title()
-                    )
-
-                    city_name = weather.get(
-                        "name",
-                        district
-                    )
+                    condition = condition.title()
 
                     st.session_state.weather_data = {
 
@@ -971,11 +1033,7 @@ elif st.session_state.page == "Crop Suggestion":
                             wind_speed,
 
                         "condition":
-                            condition,
-
-                        "city":
-                            city_name
-
+                            condition
                     }
 
                     st.success(
@@ -990,127 +1048,57 @@ elif st.session_state.page == "Crop Suggestion":
 
 
     # =====================================================
-    # WEATHER DISPLAY
+    # MANUAL WEATHER
     # =====================================================
 
-    if st.session_state.weather_data:
-
-        weather = (
-            st.session_state.weather_data
-        )
-
-        st.write("")
-
-        st.markdown(
-            f"""
-            ### 📍 {weather.get("city", district)}
-            """,
-        )
-
-        condition_icon = get_weather_icon(
-            weather["condition"]
-        )
-
-        col1, col2, col3, col4, col5 = st.columns(5)
-
-        with col1:
-
-            st.markdown(
-                f"""
-                <div class="weather-card">
-                    <div class="weather-icon">🌡️</div>
-                    <div class="weather-label">
-                        {t("temperature")}
-                    </div>
-                    <div class="weather-value">
-                        {weather["temperature"]:.1f} °C
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        with col2:
-
-            st.markdown(
-                f"""
-                <div class="weather-card">
-                    <div class="weather-icon">💧</div>
-                    <div class="weather-label">
-                        {t("humidity")}
-                    </div>
-                    <div class="weather-value">
-                        {weather["humidity"]:.0f} %
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        with col3:
-
-            st.markdown(
-                f"""
-                <div class="weather-card">
-                    <div class="weather-icon">🌧️</div>
-                    <div class="weather-label">
-                        {t("rainfall_last_hour")}
-                    </div>
-                    <div class="weather-value">
-                        {weather["rainfall"]:.1f} mm
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        with col4:
-
-            st.markdown(
-                f"""
-                <div class="weather-card">
-                    <div class="weather-icon">💨</div>
-                    <div class="weather-label">
-                        {t("wind")}
-                    </div>
-                    <div class="weather-value">
-                        {weather["wind_speed"]:.1f} m/s
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        with col5:
-
-            st.markdown(
-                f"""
-                <div class="weather-card">
-                    <div class="weather-icon">
-                        {condition_icon}
-                    </div>
-                    <div class="weather-label">
-                        {t("condition")}
-                    </div>
-                    <div class="weather-condition">
-                        {weather["condition"]}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-
     st.divider()
+
+    st.markdown(
+        f"""
+        <div class="section-heading">
+            🌡️ {t("manual_weather")}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    manual_col1, manual_col2, manual_col3 = st.columns(3)
+
+    with manual_col1:
+
+        manual_temperature = st.number_input(
+            t("temperature"),
+            min_value=0.0,
+            max_value=60.0,
+            value=25.0,
+            step=0.1
+        )
+
+    with manual_col2:
+
+        manual_humidity = st.number_input(
+            t("humidity"),
+            min_value=0.0,
+            max_value=100.0,
+            value=60.0,
+            step=1.0
+        )
+
+    with manual_col3:
+
+        manual_rainfall = st.number_input(
+            t("rainfall"),
+            min_value=0.0,
+            value=100.0,
+            step=1.0
+        )
 
 
     # =====================================================
     # WEATHER MODE
     # =====================================================
 
-    st.subheader(
-        "⚙️ " + t("weather_mode")
-    )
+    st.divider()
 
     weather_mode = st.radio(
         t("weather_mode"),
@@ -1118,64 +1106,80 @@ elif st.session_state.page == "Crop Suggestion":
             t("auto_weather_option"),
             t("manual_weather_option")
         ],
-        horizontal=True,
-        label_visibility="collapsed"
+        horizontal=True
     )
 
 
-    # =====================================================
-    # MANUAL WEATHER
-    # =====================================================
+    if weather_mode == t("auto_weather_option"):
 
-    if (
-        weather_mode
-        == t("manual_weather_option")
-    ):
+        if st.session_state.weather_data is None:
 
-        st.markdown(
-            f"""
-            <div class="section-heading">
-                ✍️ {t("manual_weather")}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-
-            manual_temperature = st.number_input(
-                t("temperature"),
-                value=25.0,
-                step=0.1,
-                key="manual_temperature"
+            st.info(
+                t("weather_required")
             )
 
-        with col2:
+        else:
 
-            manual_humidity = st.number_input(
-                t("humidity"),
-                value=60.0,
-                min_value=0.0,
-                max_value=100.0,
-                step=0.1,
-                key="manual_humidity"
+            weather_data = (
+                st.session_state.weather_data
             )
 
-        with col3:
-
-            manual_rainfall = st.number_input(
-                t("rainfall"),
-                value=100.0,
-                min_value=0.0,
-                step=0.1,
-                key="manual_rainfall"
+            st.markdown(
+                f"""
+                <div class="section-heading">
+                    🌤️ Current Weather
+                </div>
+                """,
+                unsafe_allow_html=True
             )
+
+            w1, w2, w3, w4 = st.columns(4)
+
+            with w1:
+
+                st.metric(
+                    "🌡️ " + t("temperature"),
+                    f'{weather_data["temperature"]:.1f} °C'
+                )
+
+            with w2:
+
+                st.metric(
+                    "💧 " + t("humidity"),
+                    f'{weather_data["humidity"]:.0f} %'
+                )
+
+            with w3:
+
+                st.metric(
+                    "🌧️ " + t("rainfall_last_hour"),
+                    f'{weather_data["rainfall"]:.1f} mm'
+                )
+
+            with w4:
+
+                st.metric(
+                    get_weather_icon(
+                        weather_data["condition"]
+                    )
+                    + " "
+                    + t("condition"),
+                    weather_data["condition"]
+                )
+
+            temperature = weather_data["temperature"]
+            humidity = weather_data["humidity"]
+            rainfall = weather_data["rainfall"]
+
+    else:
+
+        temperature = manual_temperature
+        humidity = manual_humidity
+        rainfall = manual_rainfall
 
 
     # =====================================================
-    # SOIL
+    # SOIL INFORMATION
     # =====================================================
 
     st.divider()
@@ -1193,212 +1197,88 @@ elif st.session_state.page == "Crop Suggestion":
         t("soil_hint")
     )
 
-    col1, col2, col3 = st.columns(3)
+    soil1, soil2 = st.columns(2)
 
-    with col1:
+    with soil1:
 
-        nitrogen = st.number_input(
+        N = st.number_input(
             t("nitrogen"),
-            value=50.0,
             min_value=0.0,
-            step=0.1,
-            key="soil_n"
+            value=50.0,
+            step=1.0
         )
 
-    with col2:
-
-        phosphorus = st.number_input(
+        P = st.number_input(
             t("phosphorus"),
-            value=50.0,
             min_value=0.0,
-            step=0.1,
-            key="soil_p"
+            value=40.0,
+            step=1.0
         )
 
-    with col3:
+    with soil2:
 
-        potassium = st.number_input(
+        K = st.number_input(
             t("potassium"),
-            value=50.0,
             min_value=0.0,
-            step=0.1,
-            key="soil_k"
+            value=40.0,
+            step=1.0
         )
 
-    ph_value = st.number_input(
-        t("ph"),
-        value=6.5,
-        min_value=0.0,
-        max_value=14.0,
-        step=0.1,
-        key="soil_ph"
-    )
-
-
-    # =====================================================
-    # SELECT WEATHER VALUES
-    # =====================================================
-
-    if (
-        weather_mode
-        == t("auto_weather_option")
-    ):
-
-        if (
-            st.session_state.weather_data
-            is None
-        ):
-
-            st.warning(
-                t("weather_required")
-            )
-
-            weather_ready = False
-
-        else:
-
-            weather = (
-                st.session_state.weather_data
-            )
-
-            temperature = weather[
-                "temperature"
-            ]
-
-            humidity = weather[
-                "humidity"
-            ]
-
-            rainfall = weather[
-                "rainfall"
-            ]
-
-            weather_ready = True
-
-    else:
-
-        temperature = (
-            manual_temperature
-        )
-
-        humidity = (
-            manual_humidity
-        )
-
-        rainfall = (
-            manual_rainfall
-        )
-
-        weather_ready = True
-
-
-    # =====================================================
-    # SELECTED WEATHER SUMMARY
-    # =====================================================
-
-    if weather_ready:
-
-        st.write("")
-
-        st.info(
-            (
-                f"Using Weather → "
-                f"{temperature:.1f} °C | "
-                f"{humidity:.0f}% humidity | "
-                f"{rainfall:.1f} mm rainfall"
-            )
-            if st.session_state.language == "English"
-            else
-            (
-                f"उपयोग किया जा रहा मौसम → "
-                f"{temperature:.1f} °C | "
-                f"{humidity:.0f}% नमी | "
-                f"{rainfall:.1f} mm वर्षा"
-            )
+        ph = st.number_input(
+            t("ph"),
+            min_value=0.0,
+            max_value=14.0,
+            value=6.5,
+            step=0.1
         )
 
 
     # =====================================================
-    # CROP PREDICTION
+    # CROP SUGGESTION BUTTON
     # =====================================================
 
-    st.write("")
+    st.divider()
 
     if st.button(
-        "🌱 " + t("get_crop"),
+        "🌾 " + t("get_crop"),
         type="primary",
-        use_container_width=True,
-        key="crop_prediction_button"
+        use_container_width=True
     ):
 
-        if not weather_ready:
+        payload = {
 
-            st.warning(
-                t("weather_required")
-            )
+            "N": N,
+            "P": P,
+            "K": K,
+            "temperature": temperature,
+            "humidity": humidity,
+            "ph": ph,
+            "rainfall": rainfall
+        }
+
+        data, error = call_api(
+            "/predict1",
+            payload
+        )
+
+        if error:
+
+            st.error(error)
 
         else:
 
-            # IMPORTANT:
-            # FastAPI /predict1 payload remains unchanged.
+            raw_crop = data.get(
+                "predicted_crop",
+                ""
+            )
 
-            payload = {
-
-                "N":
-                    float(nitrogen),
-
-                "P":
-                    float(phosphorus),
-
-                "K":
-                    float(potassium),
-
-                "temperature":
-                    float(temperature),
-
-                "humidity":
-                    float(humidity),
-
-                "ph":
-                    float(ph_value),
-
-                "rainfall":
-                    float(rainfall)
-
-            }
-
-            with st.spinner(
-                "Getting crop suggestion..."
-                if st.session_state.language == "English"
-                else
-                "फसल सुझाव प्राप्त किया जा रहा है..."
-            ):
-
-                data, error = call_api(
-                    "/predict1",
-                    payload
-                )
-
-            if error:
-
-                st.error(
-                    error
-                )
-
-            else:
-
-                raw_crop = data.get(
-                    "predict_crop",
-                    ""
-                )
+            if raw_crop:
 
                 crop_name = clean_crop_name(
                     raw_crop
                 )
 
-                st.session_state.recommended_crop = (
-                    crop_name
-                )
+                st.session_state.recommended_crop = crop_name
 
                 st.success(
                     t("crop_success")
@@ -1409,16 +1289,22 @@ elif st.session_state.page == "Crop Suggestion":
                     <div class="crop-result-card">
 
                         <div class="crop-result-label">
-                            🌾 {t("recommended")}
+                            🌱 {t("recommended")}
                         </div>
 
                         <div class="crop-result-name">
-                            {crop_name}
+                            🌾 {crop_name}
                         </div>
 
                     </div>
                     """,
                     unsafe_allow_html=True
+                )
+
+            else:
+
+                st.error(
+                    "No crop suggestion received from API."
                 )
 
 
@@ -1438,119 +1324,171 @@ elif st.session_state.page == "Yield Estimation":
 
     st.divider()
 
-    col1, col2 = st.columns(2)
+    # =====================================================
+    # LOAD YIELD OPTIONS FROM MODEL ENCODERS
+    # =====================================================
 
-    with col1:
-
-        crop = st.text_input(
-            t("crop"),
-            placeholder="Rice"
-        )
-
-    with col2:
-
-        state = st.text_input(
-            t("state"),
-            placeholder="Uttar Pradesh"
-        )
-
-    season = st.selectbox(
-        t("season"),
-        [
-            "Kharif",
-            "Rabi",
-            "Whole Year",
-            "Summer",
-            "Winter"
-        ]
+    options, options_error = get_options(
+        "/yield-options"
     )
 
-    area = st.number_input(
-        t("area"),
-        min_value=0.01,
-        value=1.0,
-        step=0.1
-    )
+    if options_error:
 
-    if st.button(
-        "📊 " + t("estimate_yield"),
-        type="primary",
-        use_container_width=True
-    ):
+        st.error(
+            options_error
+        )
 
-        if not crop or not state:
+    else:
 
-            st.warning(
-                "Please enter Crop and State."
+        crops = options.get(
+            "crops",
+            []
+        )
+
+        states = options.get(
+            "states",
+            []
+        )
+
+        seasons = options.get(
+            "seasons",
+            []
+        )
+
+        if not crops or not states or not seasons:
+
+            st.error(
+                t("options_error")
             )
 
         else:
 
-            payload = {
+            col1, col2 = st.columns(2)
 
-                "Crop":
-                    crop.strip(),
+            with col1:
 
-                "State":
-                    state.strip(),
+                crop = st.selectbox(
+                    "🌱 " + t("select_crop"),
+                    crops,
+                    key="yield_crop"
+                )
 
-                "Season":
-                    season.strip(),
+            with col2:
 
-                "Area":
-                    float(area)
+                state = st.selectbox(
+                    "📍 " + t("select_state"),
+                    states,
+                    key="yield_state"
+                )
 
-            }
+            season = st.selectbox(
+                "🌦️ " + t("select_season"),
+                seasons,
+                key="yield_season"
+            )
 
-            with st.spinner(
-                "Estimating yield..."
+            area = st.number_input(
+                "📐 " + t("area"),
+                min_value=0.01,
+                value=1.0,
+                step=0.1
+            )
+
+            st.divider()
+
+            if st.button(
+                "📊 " + t("estimate_yield"),
+                type="primary",
+                use_container_width=True
             ):
+
+                payload = {
+
+                    "Crop": crop,
+                    "State": state,
+                    "Season": season,
+                    "Area": area
+                }
 
                 data, error = call_api(
                     "/predict2",
                     payload
                 )
 
-            if error:
+                if error:
 
-                st.error(
-                    error
-                )
+                    st.error(error)
 
-            else:
+                else:
 
-                raw_value = data.get(
-                    "predict_yield",
-                    data.get(
-                        "yield",
-                        0
+                    raw_yield = data.get(
+                        "predicted_yield"
                     )
-                )
 
-                yield_value = extract_number(
-                    raw_value
-                )
+                    if raw_yield is not None:
 
-                st.markdown(
-                    f"""
-                    <div class="result-box">
+                        predicted_yield = extract_number(
+                            raw_yield
+                        )
 
-                        <div class="result-title">
-                            📊 {t("yield_result")}
-                        </div>
+                        st.success(
+                            "Yield estimation generated successfully."
+                            if st.session_state.language == "English"
+                            else
+                            "उत्पादन अनुमान सफलतापूर्वक प्राप्त हो गया।"
+                        )
 
-                        <div class="result-value">
-                            {yield_value:.2f}
-                        </div>
+                        st.markdown(
+                            f"""
+                            <div class="result-box">
 
-                        <div>
-                            {t("yield_unit")}
-                        </div>
+                                <div class="result-title">
+                                    📊 {t("yield_result")}
+                                </div>
 
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                                <div class="result-value">
+                                    {predicted_yield:,.2f}
+                                    {t("yield_unit")}
+                                </div>
+
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+
+                        st.write("")
+
+                        info1, info2, info3, info4 = st.columns(4)
+
+                        with info1:
+                            st.metric(
+                                "🌱 " + t("crop"),
+                                crop
+                            )
+
+                        with info2:
+                            st.metric(
+                                "📍 " + t("state"),
+                                state
+                            )
+
+                        with info3:
+                            st.metric(
+                                "🌦️ " + t("season"),
+                                season
+                            )
+
+                        with info4:
+                            st.metric(
+                                "📐 " + t("area"),
+                                f"{area:g} ha"
+                            )
+
+                    else:
+
+                        st.error(
+                            "No yield estimate received from API."
+                        )
 
 
 # =========================================================
@@ -1569,105 +1507,153 @@ elif st.session_state.page == "Cost Estimation":
 
     st.divider()
 
-    col1, col2 = st.columns(2)
+    # =====================================================
+    # LOAD COST OPTIONS FROM MODEL ENCODERS
+    # =====================================================
 
-    with col1:
-
-        crop = st.text_input(
-            t("crop"),
-            placeholder="Rice"
-        )
-
-    with col2:
-
-        state = st.text_input(
-            t("state"),
-            placeholder="Uttar Pradesh"
-        )
-
-    yield_value = st.number_input(
-        "Yield (Quintal / Hectare)",
-        min_value=0.01,
-        value=1.0,
-        step=0.1
+    options, options_error = get_options(
+        "/cost-options"
     )
 
-    if st.button(
-        "💰 " + t("estimate_cost"),
-        type="primary",
-        use_container_width=True
-    ):
+    if options_error:
 
-        if not crop or not state:
+        st.error(
+            options_error
+        )
 
-            st.warning(
-                "Please enter Crop and State."
+    else:
+
+        crops = options.get(
+            "crops",
+            []
+        )
+
+        states = options.get(
+            "states",
+            []
+        )
+
+        if not crops or not states:
+
+            st.error(
+                t("options_error")
             )
 
         else:
 
-            payload = {
+            col1, col2 = st.columns(2)
 
-                "Crop":
-                    crop.strip(),
+            with col1:
 
-                "State":
-                    state.strip(),
+                crop = st.selectbox(
+                    "🌱 " + t("select_crop"),
+                    crops,
+                    key="cost_crop"
+                )
 
-                "Yield":
-                    float(yield_value)
+            with col2:
 
-            }
+                state = st.selectbox(
+                    "📍 " + t("select_state"),
+                    states,
+                    key="cost_state"
+                )
 
-            with st.spinner(
-                "Estimating cost..."
+            estimated_yield = st.number_input(
+                "📊 " + t("profit_yield"),
+                min_value=0.0,
+                value=1.0,
+                step=0.1
+            )
+
+            st.divider()
+
+            if st.button(
+                "💰 " + t("estimate_cost"),
+                type="primary",
+                use_container_width=True
             ):
+
+                payload = {
+
+                    "Crop": crop,
+                    "State": state,
+                    "Yield": estimated_yield
+                }
 
                 data, error = call_api(
                     "/predict3",
                     payload
                 )
 
-            if error:
+                if error:
 
-                st.error(
-                    error
-                )
+                    st.error(error)
 
-            else:
+                else:
 
-                raw_cost = data.get(
-                    "predict_cost",
-                    data.get(
-                        "cost",
-                        0
+                    raw_cost = data.get(
+                        "predicted_cost"
                     )
-                )
 
-                cost_value = extract_number(
-                    raw_cost
-                )
+                    if raw_cost is not None:
 
-                st.markdown(
-                    f"""
-                    <div class="result-box">
+                        predicted_cost = extract_number(
+                            raw_cost
+                        )
 
-                        <div class="result-title">
-                            💰 {t("cost_result")}
-                        </div>
+                        st.success(
+                            "Cost estimation generated successfully."
+                            if st.session_state.language == "English"
+                            else
+                            "लागत अनुमान सफलतापूर्वक प्राप्त हो गया।"
+                        )
 
-                        <div class="result-value">
-                            ₹{cost_value:,.2f}
-                        </div>
+                        st.markdown(
+                            f"""
+                            <div class="result-box">
 
-                        <div>
-                            {t("cost_unit")}
-                        </div>
+                                <div class="result-title">
+                                    💰 {t("cost_result")}
+                                </div>
 
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                                <div class="result-value">
+                                    ₹ {predicted_cost:,.2f}
+                                    {t("cost_unit")}
+                                </div>
+
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+
+                        st.write("")
+
+                        info1, info2, info3 = st.columns(3)
+
+                        with info1:
+                            st.metric(
+                                "🌱 " + t("crop"),
+                                crop
+                            )
+
+                        with info2:
+                            st.metric(
+                                "📍 " + t("state"),
+                                state
+                            )
+
+                        with info3:
+                            st.metric(
+                                "📊 " + t("profit_yield"),
+                                f"{estimated_yield:,.2f}"
+                            )
+
+                    else:
+
+                        st.error(
+                            "No cost estimate received from API."
+                        )
 
 
 # =========================================================
@@ -1681,44 +1667,33 @@ elif st.session_state.page == "Profit Estimation":
     )
 
     st.write(
-        "This section is independent. Enter your own values."
-        if st.session_state.language == "English"
-        else
-        "यह सेक्शन स्वतंत्र है। अपनी जानकारी अलग से दर्ज करें।"
+        t("profit_desc")
     )
 
     st.divider()
 
-    crop = st.text_input(
-        t("crop"),
-        placeholder="Rice"
-    )
-
-    state = st.text_input(
-        t("state"),
-        placeholder="Uttar Pradesh"
-    )
-
-    profit_yield = st.number_input(
-        t("profit_yield"),
-        min_value=0.01,
+    yield_value = st.number_input(
+        "📊 " + t("profit_yield"),
+        min_value=0.0,
         value=1.0,
         step=0.1
     )
 
     cultivation_cost = st.number_input(
-        t("cultivation_cost"),
+        "💰 " + t("cultivation_cost"),
         min_value=0.0,
-        value=10000.0,
+        value=0.0,
         step=100.0
     )
 
     selling_price = st.number_input(
-        t("selling_price"),
+        "🏷️ " + t("selling_price"),
         min_value=0.0,
-        value=2500.0,
-        step=50.0
+        value=0.0,
+        step=100.0
     )
+
+    st.divider()
 
     if st.button(
         "📈 " + t("calculate_profit"),
@@ -1726,65 +1701,55 @@ elif st.session_state.page == "Profit Estimation":
         use_container_width=True
     ):
 
-        if not crop or not state:
+        revenue = (
+            yield_value
+            * selling_price
+        )
 
-            st.warning(
-                "Please enter Crop and State."
+        profit = (
+            revenue
+            - cultivation_cost
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            st.markdown(
+                f"""
+                <div class="result-box">
+
+                    <div class="result-title">
+                        💵 {t("revenue")}
+                    </div>
+
+                    <div class="result-value">
+                        ₹ {revenue:,.2f}
+                    </div>
+
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
-        else:
+        with col2:
 
-            total_revenue = (
-                profit_yield
-                * selling_price
+            st.markdown(
+                f"""
+                <div class="result-box">
+
+                    <div class="result-title">
+                        📈 {t("profit_result")}
+                    </div>
+
+                    <div class="result-value">
+                        ₹ {profit:,.2f}
+                    </div>
+
+                </div>
+                """,
+                unsafe_allow_html=True
             )
-
-            profit = (
-                total_revenue
-                - cultivation_cost
-            )
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-
-                st.metric(
-                    t("revenue"),
-                    f"₹{total_revenue:,.2f}"
-                )
-
-                st.caption(
-                    t("per_hectare")
-                )
-
-            with col2:
-
-                st.metric(
-                    t("profit_result"),
-                    f"₹{profit:,.2f}"
-                )
-
-                st.caption(
-                    t("per_hectare")
-                )
-
-            if profit >= 0:
-
-                st.success(
-                    "Profit is positive."
-                    if st.session_state.language == "English"
-                    else
-                    "लाभ सकारात्मक है।"
-                )
-
-            else:
-
-                st.error(
-                    "Estimated loss."
-                    if st.session_state.language == "English"
-                    else
-                    "अनुमानित नुकसान।"
-                )
 
 
 # =========================================================
@@ -1797,32 +1762,26 @@ elif st.session_state.page == "About":
         "ℹ️ " + t("about")
     )
 
-    st.divider()
+    st.write("")
 
-    st.subheader(
-        "🌾 AgriSense AI"
-    )
-
-    st.write(
+    st.markdown(
         """
-        AgriSense AI is a smart agriculture application
-        that uses Machine Learning to assist farmers.
+        ### 🌾 AgriSense AI
 
-        The application provides:
+        AgriSense AI is a smart agriculture assistant that uses
+        Machine Learning and agricultural data to help farmers
+        make better farming decisions.
 
-        • Crop Suggestion
+        #### Features
 
-        • Yield Estimation
+        - 🌱 Crop Suggestion
+        - 📊 Yield Estimation
+        - 💰 Cost Estimation
+        - 📈 Profit Estimation
+        - 🌦️ Current Weather Information
 
-        • Cost Estimation
-
-        • Profit Estimation
-
-        • Automatic and Manual Weather support
+        The application combines agricultural data, weather
+        information and machine learning models to provide
+        useful farming estimates.
         """
     )
-
-    st.info(
-        "Built with Python, Streamlit, FastAPI and Machine Learning."
-    )
-
