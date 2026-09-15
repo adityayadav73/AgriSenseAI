@@ -79,5 +79,5 @@ AgriSense-AI/
 └── 03_yield_cost_model.joblib  
 ## 🌐 Live Demo
 You can try the live application here:  
-👉 **[AgriSense AI Web App](https://agrisenseai-n621.onrender.com/)**
+👉 **[AgriSense AI Web App](https://agrisenseai-gps1.onrender.com/)**
 
