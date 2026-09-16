@@ -45,6 +45,23 @@ encoder_yield_cost_state = joblib.load("03_le_state.joblib")
 
 
 # ==========================================
+# MODEL OPTIONS - LOAD ONCE
+# ==========================================
+
+YIELD_OPTIONS = {
+    "crops": encoder_yield_crop.classes_.tolist(),
+    "states": encoder_yield_state.classes_.tolist(),
+    "seasons": encoder_yield_season.classes_.tolist()
+}
+
+
+COST_OPTIONS = {
+    "crops": encoder_yield_cost_crop.classes_.tolist(),
+    "states": encoder_yield_cost_state.classes_.tolist()
+}
+
+
+# ==========================================
 # INPUT DATA MODELS
 # ==========================================
 
@@ -351,18 +368,24 @@ def predict_cost(data: CostInput):
             detail=f"Internal cost processing error: {str(e)}"
         )
 
+
+# ==========================================
+# YIELD OPTIONS
+# GET /yield-options
+# ==========================================
+
 @app.get("/yield-options")
 def yield_options():
-    return {
-        "crops": encoder_yield_crop.classes_.tolist(),
-        "states": encoder_yield_state.classes_.tolist(),
-        "seasons": encoder_yield_season.classes_.tolist()
-    }
 
+    return YIELD_OPTIONS
+
+
+# ==========================================
+# COST OPTIONS
+# GET /cost-options
+# ==========================================
 
 @app.get("/cost-options")
 def cost_options():
-    return {
-        "crops": encoder_yield_cost_crop.classes_.tolist(),
-        "states": encoder_yield_cost_state.classes_.tolist()
-    }
+
+    return COST_OPTIONS
